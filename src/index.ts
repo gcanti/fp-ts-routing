@@ -9,6 +9,7 @@ import { monoidArray } from 'fp-ts/lib/Monoid'
 import { Either, right, left } from 'fp-ts/lib/Either'
 import { fold as foldArray } from 'fp-ts/lib/Array'
 import { applySecond as generalApplySecond } from 'fp-ts/lib/Apply'
+import { voidRight as generalVoidRight } from 'fp-ts/lib/Functor'
 
 // Adapted from https://github.com/slamdata/purescript-routing
 
@@ -112,6 +113,12 @@ export class Match<A> {
   }
 }
 
+export interface Match<A> {
+  '*>'<B>(fb: Match<B>): Match<B>
+}
+
+Match.prototype['*>'] = Match.prototype.applySecond
+
 export function map<A, B>(f: (a: A) => B, fa: Match<A>): Match<B> {
   return fa.map(f)
 }
@@ -142,6 +149,10 @@ export const routing: Applicative<URI> & Alternative<URI> = {
 }
 
 const applySecond = generalApplySecond(routing)
+
+export function voidRight<A, B>(a: A, fb: Match<B>): Match<A> {
+  return generalVoidRight(routing, a, fb)
+}
 
 export function runMatch<A>(match: Match<A>, route: Route): Either<string, A> {
   return match.toEither(route)

@@ -1,8 +1,7 @@
 import * as assert from 'assert'
-import { parse, lit, routing, Match, runMatch } from '../src'
+import { parse, lit, Match, runMatch, voidRight } from '../src'
 import { none, some } from 'fp-ts/lib/Option'
 import { StrMap } from 'fp-ts/lib/StrMap'
-import { voidRight } from 'fp-ts/lib/Functor'
 import { right, left } from 'fp-ts/lib/Either'
 
 describe('parse', () => {
@@ -46,8 +45,8 @@ describe('match', () => {
 
     type Location = Home | Jupiter
 
-    const home: Match<Location> = voidRight(routing, new Home(), lit(''))
-    const jupiter: Match<Location> = voidRight(routing, new Jupiter(), lit('planets').applySecond(lit('jupiter')))
+    const home: Match<Location> = voidRight(new Home(), lit(''))
+    const jupiter: Match<Location> = voidRight(new Jupiter(), lit('planets')['*>'](lit('jupiter')))
 
     const routes: Match<Location> = jupiter.alt(home)
 
