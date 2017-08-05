@@ -19,8 +19,6 @@ declare module 'fp-ts/lib/HKT' {
   }
 }
 
-const failure = <A>(l: Array<MatchError>): Validation<Array<MatchError>, A> => generalFailure(monoidArray, l)
-
 export type Route = {
   parts: Array<string>
   query: Option<StrMap<string>>
@@ -52,6 +50,10 @@ export function parse(hash: string): Route {
   }
 }
 
+//
+// MatchError
+//
+
 export type MatchError =
   | { type: 'UnexpectedPath'; expected: string; actual: string }
   | { type: 'ExpectedBoolean' }
@@ -72,6 +74,12 @@ export function showMatchError(e: MatchError): string {
       return JSON.stringify(e)
   }
 }
+
+const failure = <A>(l: Array<MatchError>): Validation<Array<MatchError>, A> => generalFailure(monoidArray, l)
+
+//
+// Match
+//
 
 export const URI = 'Match'
 
@@ -114,6 +122,7 @@ export class Match<A> {
 }
 
 export interface Match<A> {
+  /** An alias of applySecond */
   '*>'<B>(fb: Match<B>): Match<B>
 }
 
@@ -139,7 +148,7 @@ export function zero<A>(): Match<A> {
   return new Match(() => failure([]))
 }
 
-export const routing: Applicative<URI> & Alternative<URI> = {
+export const match: Applicative<URI> & Alternative<URI> = {
   URI,
   map,
   of,
@@ -148,15 +157,19 @@ export const routing: Applicative<URI> & Alternative<URI> = {
   zero
 }
 
-const applySecond = generalApplySecond(routing)
+const applySecond = generalApplySecond(match)
 
 export function voidRight<A, B>(a: A, fb: Match<B>): Match<A> {
-  return generalVoidRight(routing, a, fb)
+  return generalVoidRight(match, a, fb)
 }
 
 export function runMatch<A>(match: Match<A>, route: Route): Either<string, A> {
   return match.toEither(route)
 }
+
+//
+// route-matching primitives
+//
 
 /**
  * `lit x` will match exactly the path component `x`
