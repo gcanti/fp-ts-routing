@@ -95,12 +95,13 @@ export const type = <K extends string, A>(k: K, type: t.Type<A>): Match<{ [_ in 
     new Formatter((r, o) => new Route(r.parts.concat(String(o[k])), r.query))
   )
 
-/** `int` matches any integer path component */
+/** `str` matches any string path component */
 export const str = <K extends string>(k: K): Match<{ [_ in K]: string }> => type(k, t.string)
 
+export const IntegerFromString = t.prism(t.string, s => t.validate(parseInt(s, 10), t.Integer).toOption())
+
 /** `int` matches any integer path component */
-export const int = <K extends string>(k: K): Match<{ [_ in K]: number }> =>
-  type(k, t.prism(t.string, s => t.validate(parseInt(s, 10), t.Integer).toOption()))
+export const int = <K extends string>(k: K): Match<{ [_ in K]: number }> => type(k, IntegerFromString)
 
 /**
  * `lit(x)` will match exactly the path component `x`
@@ -116,4 +117,10 @@ export const lit = (literal: string): Match<{}> =>
       )
     ),
     new Formatter((r, n) => new Route(r.parts.concat(literal), r.query))
+  )
+
+export const query = <T extends t.InterfaceType<any>>(type: T): Match<t.TypeOf<T>> =>
+  new Match(
+    new Parser(r => t.validate(r.query, type).toOption().map(query => tuple(query, new Route(r.parts, {})))),
+    new Formatter((r, query) => new Route(r.parts, query))
   )

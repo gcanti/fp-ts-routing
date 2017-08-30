@@ -1,5 +1,6 @@
 import * as assert from 'assert'
-import { lit, int, end, zero, parse, Route, Match, str } from '../src'
+import { lit, int, end, zero, parse, Route, Match, str, query, IntegerFromString } from '../src'
+import * as t from 'io-ts'
 
 //
 // usage
@@ -109,6 +110,15 @@ describe('parsers', () => {
 
   it('int', () => {
     assert.strictEqual(int('id').parser.run(Route.parse('/1')).exists(([{ id }]) => id === 1), true)
+  })
+
+  it('query', () => {
+    assert.strictEqual(
+      query(t.interface({ a: t.string, b: IntegerFromString })).parser
+        .run(Route.parse('/foo/bar/?a=baz&b=1'))
+        .exists(([{ a, b }]) => a === 'baz' && b === 1),
+      true
+    )
   })
 
   it('should match a location', () => {
