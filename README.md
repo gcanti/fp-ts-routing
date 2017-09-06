@@ -78,3 +78,11 @@ assert.strictEqual(parseLocation('/foo'), NotFound.value)
 assert.strictEqual(formatLocation(user)({ userId: 1 }), '/users/1')
 assert.strictEqual(formatLocation(invoice)({ userId: 1, invoiceId: 2 }), '/users/1/invoice/2')
 ```
+
+# Defining new matches via io-ts types
+
+The function `type` allows to define a new `Match` from a [io-ts](https://github.com/gcanti/io-ts) runtime type
+
+```ts
+type<K extends string, A>(k: K, type: t.Type<A>, formatter: (a: A) => string): Match<{ [_ in K]: A }>
+```
