@@ -1,57 +1,138 @@
 import * as assert from 'assert'
-import { parse, lit, Match, runMatch, voidRight } from '../src'
-import { none, some } from 'fp-ts/lib/Option'
-import { StrMap } from 'fp-ts/lib/StrMap'
-import { right, left } from 'fp-ts/lib/Either'
+import { lit, int, end, zero, parse, Route, Match, str, query, IntegerFromString } from '../src'
+import * as t from 'io-ts'
 
-describe('parse', () => {
+//
+// usage
+//
+
+// locations
+class Home {
+  static value = new Home()
+  readonly _tag: 'Home' = 'Home'
+  private constructor() {}
+  inspect(): string {
+    return this.toString()
+  }
+  toString(): string {
+    return `Home.value`
+  }
+}
+
+class User {
+  readonly _tag: 'User' = 'User'
+  constructor(readonly id: number) {}
+  inspect(): string {
+    return this.toString()
+  }
+  toString(): string {
+    return `new User(${this.id})`
+  }
+}
+
+class Invoice {
+  readonly _tag: 'Invoice' = 'Invoice'
+  constructor(readonly userId: number, readonly invoiceId: number) {}
+  inspect(): string {
+    return this.toString()
+  }
+  toString(): string {
+    return `new Invoice(${this.userId}, ${this.invoiceId})`
+  }
+}
+
+class NotFound {
+  static value = new NotFound()
+  readonly _tag: 'NotFound' = 'NotFound'
+  private constructor() {}
+  inspect(): string {
+    return this.toString()
+  }
+  toString(): string {
+    return `NotFound.value`
+  }
+}
+
+type Location = Home | User | Invoice | NotFound
+
+// matches
+const defaults = end
+const home = lit('home').then(end)
+const _user = lit('users').then(int('userId'))
+const user = _user.then(end)
+const invoice = _user.then(lit('invoice')).then(int('invoiceId')).then(end)
+
+// router
+const router = zero<Location>()
+  .alt(defaults.parser.map(() => Home.value))
+  .alt(home.parser.map(() => Home.value))
+  .alt(user.parser.map(({ userId }) => new User(userId)))
+  .alt(invoice.parser.map(({ userId, invoiceId }) => new Invoice(userId, invoiceId)))
+
+// helpers
+const parseLocation = (s: string): Location => parse(router, Route.parse(s), NotFound.value)
+const formatLocation = <A>(match: Match<A>) => (location: A): string =>
+  match.formatter.run(Route.empty, location).toString()
+
+describe('Route.parse', () => {
   it('should parse a path', () => {
-    assert.deepEqual(parse('/'), {
-      parts: [''],
-      query: none
+    assert.deepEqual(Route.parse('/'), {
+      parts: [],
+      query: {}
     })
-    assert.deepEqual(parse('/foo'), {
+    assert.deepEqual(Route.parse('/foo'), {
       parts: ['foo'],
-      query: none
+      query: {}
     })
-    assert.deepEqual(parse('/foo/bar'), {
+    assert.deepEqual(Route.parse('/foo/bar'), {
       parts: ['foo', 'bar'],
-      query: none
+      query: {}
     })
-    assert.deepEqual(parse('/foo/bar/'), {
+    assert.deepEqual(Route.parse('/foo/bar/'), {
       parts: ['foo', 'bar'],
-      query: none
+      query: {}
     })
-    assert.deepEqual(parse('/foo/bar?a=1'), {
+    assert.deepEqual(Route.parse('/foo/bar?a=1'), {
       parts: ['foo', 'bar'],
-      query: some(new StrMap({ a: 1 }))
+      query: { a: 1 }
     })
-    assert.deepEqual(parse('/foo/bar/?a=1'), {
+    assert.deepEqual(Route.parse('/foo/bar/?a=1'), {
       parts: ['foo', 'bar'],
-      query: some(new StrMap({ a: 1 }))
+      query: { a: 1 }
     })
   })
 })
 
-describe('match', () => {
-  it('should match a path', () => {
-    class Home {
-      public readonly _tag: 'Home' = 'Home'
-    }
+describe('parsers', () => {
+  it('str', () => {
+    assert.strictEqual(str('id').parser.run(Route.parse('/astring')).exists(([{ id }]) => id === 'astring'), true)
+  })
 
-    class Jupiter {
-      public readonly _tag: 'Jupiter' = 'Jupiter'
-    }
+  it('int', () => {
+    assert.strictEqual(int('id').parser.run(Route.parse('/1')).exists(([{ id }]) => id === 1), true)
+  })
 
-    type Location = Home | Jupiter
+  it('query', () => {
+    assert.strictEqual(
+      query(t.interface({ a: t.string, b: IntegerFromString })).parser
+        .run(Route.parse('/foo/bar/?a=baz&b=1'))
+        .exists(([{ a, b }]) => a === 'baz' && b === 1),
+      true
+    )
+  })
 
-    const home: Match<Location> = voidRight(new Home(), lit(''))
-    const jupiter: Match<Location> = voidRight(new Jupiter(), lit('planets')['*>'](lit('jupiter')))
+  it('should match a location', () => {
+    assert.strictEqual(parseLocation('/'), Home.value)
+    assert.strictEqual(parseLocation('/home'), Home.value)
+    assert.deepEqual(parseLocation('/users/1'), new User(1))
+    assert.deepEqual(parseLocation('/users/1/invoice/2'), new Invoice(1, 2))
+    assert.strictEqual(parseLocation('/foo'), NotFound.value)
+  })
+})
 
-    const routes: Match<Location> = jupiter.alt(home)
-
-    assert.deepEqual(runMatch(routes, parse('/')), right(new Home()))
-    assert.deepEqual(runMatch(routes, parse('/planets/jupiter')), right(new Jupiter()))
-    assert.deepEqual(runMatch(routes, parse('/planets/mars')), left('UnexpectedPath: expected "" was "planets"'))
+describe('format', () => {
+  it('should format a location', () => {
+    assert.strictEqual(formatLocation(user)({ userId: 1 }), '/users/1')
+    assert.strictEqual(formatLocation(invoice)({ userId: 1, invoiceId: 2 }), '/users/1/invoice/2')
   })
 })

@@ -1,280 +1,126 @@
 import * as url from 'url'
-import { Option, some, none, isNone } from 'fp-ts/lib/Option'
-import { StrMap, isEmpty, lookup, remove } from 'fp-ts/lib/StrMap'
-import { Tuple } from 'fp-ts/lib/Tuple'
-import { Validation, failure as generalFailure, success } from 'fp-ts/lib/Validation'
-import { Applicative } from 'fp-ts/lib/Applicative'
-import { Alternative } from 'fp-ts/lib/Alternative'
-import { monoidArray } from 'fp-ts/lib/Monoid'
-import { Either, right, left } from 'fp-ts/lib/Either'
-import { fold as foldArray } from 'fp-ts/lib/Array'
-import { applySecond as generalApplySecond } from 'fp-ts/lib/Apply'
-import { voidRight as generalVoidRight } from 'fp-ts/lib/Functor'
+import * as querystring from 'querystring'
+import { Option, some, none, fromNullable } from 'fp-ts/lib/Option'
+import { tuple, identity } from 'fp-ts/lib/function'
+import * as array from 'fp-ts/lib/Array'
+import * as t from 'io-ts'
 
-// Adapted from https://github.com/slamdata/purescript-routing
+const isObjectEmpty = (o: object): boolean => {
+  for (const k in o) {
+    return k === null
+  }
+  return true
+}
 
-declare module 'fp-ts/lib/HKT' {
-  interface URI2HKT<A> {
-    Match: Match<A>
+export class Route {
+  static empty = new Route([], {})
+  constructor(readonly parts: Array<string>, readonly query: object) {}
+  static isEmpty = (r: Route) => r.parts.length === 0 && isObjectEmpty(r.query)
+  static parse = (s: string): Route => {
+    const route: url.Url = url.parse(s, true)
+    const parts = fromNullable(route.pathname).map(s => s.split('/').filter(x => Boolean(x))).getOrElse(() => [])
+    return new Route(parts, route.query)
+  }
+  inspect(): string {
+    return this.toString()
+  }
+  toString(): string {
+    const qs = querystring.stringify(this.query)
+    return '/' + this.parts.join('/') + (qs ? '?' + qs : '')
   }
 }
 
-export type Route = {
-  parts: Array<string>
-  query: Option<StrMap<string>>
-}
-
-export function isEmptyRoute(route: Route): boolean {
-  return route.parts.length === 0 && isNone(route.query)
-}
-
-function sanitize(xs: Array<string>): Array<string> {
-  const ys = xs.filter(x => x !== '')
-  return ys.length === 0 ? [''] : ys
-}
-
-export function parse(hash: string): Route {
-  const route = url.parse(hash, true)
-  const parts = route.pathname ? sanitize(route.pathname.split('/')) : ['']
-  const query = new StrMap<string>(route.query)
-  if (isEmpty(query)) {
-    return {
-      parts,
-      query: none
-    }
-  } else {
-    return {
-      parts,
-      query: some(query)
-    }
+export class Parser<A> {
+  constructor(readonly run: (r: Route) => Option<[A, Route]>) {}
+  static of = <A>(a: A): Parser<A> => new Parser(s => some(tuple(a, s)))
+  map<B>(f: (a: A) => B): Parser<B> {
+    return new Parser(r => this.run(r).map(([a, r2]) => tuple(f(a), r2)))
+  }
+  ap<B>(fab: Parser<(a: A) => B>): Parser<B> {
+    return fab.chain(f => this.map(f))
+  }
+  chain<B>(f: (a: A) => Parser<B>): Parser<B> {
+    return new Parser(r => this.run(r).chain(([a, r2]) => f(a).run(r2)))
+  }
+  alt(that: Parser<A>): Parser<A> {
+    return new Parser(r => this.run(r).alt(that.run(r)))
+  }
+  then<B>(that: Parser<B>): Parser<A & B> {
+    return this.chain(a => new Parser(r => that.run(r).map(([b, r2]) => tuple(Object.assign({}, a, b), r2))))
   }
 }
 
-//
-// MatchError
-//
+export const zero = <A>(): Parser<A> => new Parser(() => none)
 
-export type MatchError =
-  | { type: 'UnexpectedPath'; expected: string; actual: string }
-  | { type: 'ExpectedBoolean' }
-  | { type: 'ExpectedEnd' }
-  | { type: 'ExpectedInt' }
-  | { type: 'ExpectedString' }
-  | { type: 'ExpectedQuery' }
-  | { type: 'ExpectedPathPart' }
-  | { type: 'KeyNotFound'; value: string }
-  | { type: 'Fail'; value: string }
+export const parse = <A>(parser: Parser<A>, r: Route, a: A): A => parser.run(r).map(([a]) => a).getOrElse(() => a)
 
-export function showMatchError(e: MatchError): string {
-  switch (e.type) {
-    case 'UnexpectedPath':
-      return `UnexpectedPath: expected ${JSON.stringify(e.expected)} was ${JSON.stringify(e.actual)}`
-    default:
-      // TODO
-      return JSON.stringify(e)
+export class Formatter<A> {
+  constructor(readonly run: (r: Route, a: A) => Route) {}
+  contramap<B>(f: (b: B) => A): Formatter<B> {
+    return new Formatter((r, b) => this.run(r, f(b)))
+  }
+  then<B>(that: Formatter<B>): Formatter<A & B> {
+    return new Formatter((r, c) => that.run(this.run(r, c), c))
   }
 }
-
-const failure = <A>(l: Array<MatchError>): Validation<Array<MatchError>, A> => generalFailure(monoidArray, l)
-
-//
-// Match
-//
-
-export const URI = 'Match'
-
-export type URI = typeof URI
 
 export class Match<A> {
-  static of = of
-  static zero = zero
-  readonly _A: A
-  readonly _URI: URI
-  constructor(public readonly run: (route: Route) => Validation<Array<MatchError>, Tuple<Route, A>>) {}
-  map<B>(f: (a: A) => B): Match<B> {
-    return new Match(r => this.run(r).map(v => v.map(f)))
+  constructor(readonly parser: Parser<A>, readonly formatter: Formatter<A>) {}
+  imap<B>(f: (a: A) => B, g: (b: B) => A): Match<B> {
+    return new Match(this.parser.map(f), this.formatter.contramap(g))
   }
-  of<B>(b: B): Match<B> {
-    return of(b)
-  }
-  ap<B>(fab: Match<(a: A) => B>): Match<B> {
-    return new Match(r =>
-      fab
-        .run(r)
-        .fold(
-          e => failure(e.concat(this.run(r).fold(e => e, () => []))),
-          s1 => this.run(s1.fst()).fold(e => failure(e), s2 => success(new Tuple([s2.fst(), s1.snd()(s2.snd())])))
-        )
-    )
-  }
-  ap_<B, C>(this: Match<(a: B) => C>, fb: Match<B>): Match<C> {
-    return fb.ap(this)
-  }
-  alt(fa: Match<A>): Match<A> {
-    return new Match(r => this.run(r).alt(fa.run(r)))
-  }
-  toEither(route: Route): Either<string, A> {
-    return this.run(route).fold(e => left(e.map(showMatchError).join(', ')), s => right(s.snd()))
-  }
-  applySecond<B>(fb: Match<B>): Match<B> {
-    return applySecond(this, fb)
+  then<B>(that: Match<B>): Match<A & B> {
+    return new Match(this.parser.then(that.parser), this.formatter.then(that.formatter))
   }
 }
 
-export interface Match<A> {
-  /** An alias of applySecond */
-  '*>'<B>(fb: Match<B>): Match<B>
-}
-
-Match.prototype['*>'] = Match.prototype.applySecond
-
-export function map<A, B>(f: (a: A) => B, fa: Match<A>): Match<B> {
-  return fa.map(f)
-}
-
-export function of<A>(a: A): Match<A> {
-  return new Match(route => success(new Tuple([route, a])))
-}
-
-export function ap<A, B>(fab: Match<(a: A) => B>, fa: Match<A>): Match<B> {
-  return fa.ap(fab)
-}
-
-export function alt<A>(fx: Match<A>, fy: Match<A>): Match<A> {
-  return fx.alt(fy)
-}
-
-export function zero<A>(): Match<A> {
-  return new Match(() => failure([]))
-}
-
-export const match: Applicative<URI> & Alternative<URI> = {
-  URI,
-  map,
-  of,
-  ap,
-  alt,
-  zero
-}
-
-const applySecond = generalApplySecond(match)
-
-export function voidRight<A, B>(a: A, fb: Match<B>): Match<A> {
-  return generalVoidRight(match, a, fb)
-}
-
-export function runMatch<A>(match: Match<A>, route: Route): Either<string, A> {
-  return match.toEither(route)
-}
-
-//
-// route-matching primitives
-//
-
-/**
- * `lit x` will match exactly the path component `x`
- * For example, `lit "x"` matches `/x`
- */
-export function lit(s: string): Match<void> {
-  return new Match(r => {
-    return foldArray(
-      () => failure([{ type: 'ExpectedPathPart' }]),
-      (head, parts) =>
-        head === s
-          ? success(new Tuple([{ parts, query: r.query }, undefined]))
-          : failure([{ type: 'UnexpectedPath', expected: s, actual: head }]),
-      r.parts
-    )
-  })
-}
-
-/**
- * `str` matches any path string component.
- * For example, `str` matches `/foo` as `"foo"`
- */
-export const str: Match<string> = new Match(r => {
-  return foldArray(
-    () => failure([{ type: 'ExpectedString' }]),
-    (head, parts) => success(new Tuple([{ parts, query: r.query }, head])),
-    r.parts
-  )
-})
-
-/**
- * `param p` matches a parameter assignment `q=v` within a query block.
- * For example, `param "q"` matches `/?q=a&r=b` as `"a"`
- */
-export function param(k: string): Match<string> {
-  return new Match(r => {
-    return foldArray(
-      () =>
-        r.query.fold(
-          () => failure([{ type: 'ExpectedQuery' }]),
-          query =>
-            lookup(k, query).fold(
-              () => failure([{ type: 'KeyNotFound', value: k }]),
-              param => {
-                const newQuery = remove(k, query)
-                return success(new Tuple([{ parts: r.parts, query: isEmpty(newQuery) ? none : some(newQuery) }, k]))
-              }
-            )
-        ),
-      () => failure([{ type: 'ExpectedQuery' }]),
-      r.parts
-    )
-  })
-}
-
-/**
- * `params` matches an entire query block. For exmaple, `params`
- * matches `/?q=a&r=b` as the map `{q : "a", r : "b"}`
- */
-export function params(s: string): Match<StrMap<string>> {
-  return new Match(r =>
-    r.query.fold(
-      () => failure([{ type: 'ExpectedQuery' }]),
-      query => success(new Tuple([{ parts: r.parts, query: none }, query]))
-    )
-  )
-}
-
-/** `int` matches any integer path component */
-export const int: Match<number> = new Match(r => {
-  return foldArray(
-    () => failure([{ type: 'ExpectedInt' }]),
-    (head, parts) => {
-      const n = parseInt(head, 10)
-      return isNaN(n) || n % 1 !== 0
-        ? failure([{ type: 'ExpectedInt' }])
-        : success(new Tuple([{ parts, query: r.query }, n]))
-    },
-    r.parts
-  )
-})
-
-/** `bool` matches any boolean path component */
-export const bool: Match<boolean> = new Match(r => {
-  return foldArray(
-    () => failure([{ type: 'ExpectedBoolean' }]),
-    (head, parts) => {
-      const r2 = { parts, query: r.query }
-      if (head === 'true') {
-        return success(new Tuple([r2, true]))
-      } else if (head === 'false') {
-        return success(new Tuple([r2, false]))
-      } else {
-        return failure([{ type: 'ExpectedBoolean' }])
-      }
-    },
-    r.parts
-  )
-})
+const singleton = <K extends string, V>(k: K, v: V): { [_ in K]: V } => ({ [k as any]: v } as any)
 
 /** `end` matches the end of a route */
-export const end: Match<void> = new Match(
-  r => (isEmptyRoute(r) ? success(new Tuple([r, undefined])) : failure([{ type: 'ExpectedEnd' }]))
+export const end: Match<{}> = new Match(
+  new Parser(r => (Route.isEmpty(r) ? some(tuple({}, r)) : none)),
+  new Formatter(identity)
 )
 
-export function fail<A>(s: string): Match<A> {
-  return new Match(() => failure([{ type: 'Fail', value: s }]))
-}
+/** `type` matches any io-ts type path component */
+export const type = <K extends string, A>(k: K, type: t.Type<A>): Match<{ [_ in K]: A }> =>
+  new Match(
+    new Parser(r =>
+      array.fold(
+        () => none,
+        (head, tail) => t.validate(head, type).toOption().map(a => tuple(singleton(k, a), new Route(tail, r.query))),
+        r.parts
+      )
+    ),
+    new Formatter((r, o) => new Route(r.parts.concat(String(o[k])), r.query))
+  )
+
+/** `str` matches any string path component */
+export const str = <K extends string>(k: K): Match<{ [_ in K]: string }> => type(k, t.string)
+
+export const IntegerFromString = t.prism(t.string, s => t.validate(parseInt(s, 10), t.Integer).toOption())
+
+/** `int` matches any integer path component */
+export const int = <K extends string>(k: K): Match<{ [_ in K]: number }> => type(k, IntegerFromString)
+
+/**
+ * `lit(x)` will match exactly the path component `x`
+ * For example, `lit('x')` matches `/x`
+ */
+export const lit = (literal: string): Match<{}> =>
+  new Match(
+    new Parser(r =>
+      array.fold(
+        () => none,
+        (head, tail) => (head === literal ? some(tuple({}, new Route(tail, r.query))) : none),
+        r.parts
+      )
+    ),
+    new Formatter((r, n) => new Route(r.parts.concat(literal), r.query))
+  )
+
+export const query = <T extends t.InterfaceType<any>>(type: T): Match<t.TypeOf<T>> =>
+  new Match(
+    new Parser(r => t.validate(r.query, type).toOption().map(query => tuple(query, new Route(r.parts, {})))),
+    new Formatter((r, query) => new Route(r.parts, query))
+  )

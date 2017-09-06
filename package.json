@@ -25,7 +25,8 @@
   },
   "homepage": "https://github.com/gcanti/fp-ts-routing",
   "dependencies": {
-    "fp-ts": "^0.4.6"
+    "fp-ts": "^0.5.2",
+    "io-ts": "^0.7.0"
   },
   "devDependencies": {
     "@types/mocha": "2.2.38",
