@@ -83,7 +83,7 @@ export const end: Match<{}> = new Match(
 )
 
 /** `type` matches any io-ts type path component */
-export const type = <K extends string, A>(k: K, type: t.Type<A>): Match<{ [_ in K]: A }> =>
+export const type = <K extends string, A>(k: K, type: t.Type<A>, formatter: (a: A) => string): Match<{ [_ in K]: A }> =>
   new Match(
     new Parser(r =>
       array.fold(
@@ -92,16 +92,16 @@ export const type = <K extends string, A>(k: K, type: t.Type<A>): Match<{ [_ in 
         r.parts
       )
     ),
-    new Formatter((r, o) => new Route(r.parts.concat(String(o[k])), r.query))
+    new Formatter((r, o) => new Route(r.parts.concat(formatter(o[k])), r.query))
   )
 
 /** `str` matches any string path component */
-export const str = <K extends string>(k: K): Match<{ [_ in K]: string }> => type(k, t.string)
+export const str = <K extends string>(k: K): Match<{ [_ in K]: string }> => type(k, t.string, identity)
 
 export const IntegerFromString = t.prism(t.string, s => t.validate(parseInt(s, 10), t.Integer).toOption())
 
 /** `int` matches any integer path component */
-export const int = <K extends string>(k: K): Match<{ [_ in K]: number }> => type(k, IntegerFromString)
+export const int = <K extends string>(k: K): Match<{ [_ in K]: number }> => type(k, IntegerFromString, n => String(n))
 
 /**
  * `lit(x)` will match exactly the path component `x`
