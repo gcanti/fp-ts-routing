@@ -30,14 +30,16 @@ export class Route {
   }
 }
 
+const assign = <A>(a: A) => <B>(b: B): A & B => Object.assign({}, a, b)
+
 export class Parser<A> {
   constructor(readonly run: (r: Route) => Option<[A, Route]>) {}
   static of = <A>(a: A): Parser<A> => new Parser(s => some(tuple(a, s)))
   map<B>(f: (a: A) => B): Parser<B> {
-    return new Parser(r => this.run(r).map(([a, r2]) => tuple(f(a), r2)))
+    return this.chain(a => Parser.of(f(a))) // <= derived
   }
   ap<B>(fab: Parser<(a: A) => B>): Parser<B> {
-    return fab.chain(f => this.map(f))
+    return fab.chain(f => this.map(f)) // <= derived
   }
   chain<B>(f: (a: A) => Parser<B>): Parser<B> {
     return new Parser(r => this.run(r).chain(([a, r2]) => f(a).run(r2)))
@@ -45,8 +47,9 @@ export class Parser<A> {
   alt(that: Parser<A>): Parser<A> {
     return new Parser(r => this.run(r).alt(that.run(r)))
   }
+  /** A mapped Monoidal.mult */
   then<B>(that: Parser<B>): Parser<A & B> {
-    return this.chain(a => new Parser(r => that.run(r).map(([b, r2]) => tuple(Object.assign({}, a, b), r2))))
+    return that.ap(this.map(assign))
   }
 }
 
@@ -60,7 +63,7 @@ export class Formatter<A> {
     return new Formatter((r, b) => this.run(r, f(b)))
   }
   then<B>(that: Formatter<B>): Formatter<A & B> {
-    return new Formatter((r, c) => that.run(this.run(r, c), c))
+    return new Formatter((r, ab) => that.run(this.run(r, ab), ab))
   }
 }
 
