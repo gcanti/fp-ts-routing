@@ -1,5 +1,6 @@
 import * as assert from 'assert'
-import { lit, int, end, zero, parse, Route, Match, str, query, IntegerFromString } from '../src'
+import { lit, int, end, zero, parse, Route, Match, str, query } from '../src'
+import { IntegerFromString } from 'io-ts-types/lib/number/IntegerFromString'
 import * as t from 'io-ts'
 
 //
