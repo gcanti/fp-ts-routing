@@ -39,7 +39,10 @@ const defaults = end
 const home = lit('home').then(end)
 const _user = lit('users').then(int('userId'))
 const user = _user.then(end)
-const invoice = _user.then(lit('invoice')).then(int('invoiceId')).then(end)
+const invoice = _user
+  .then(lit('invoice'))
+  .then(int('invoiceId'))
+  .then(end)
 
 //
 // router
@@ -84,5 +87,5 @@ assert.strictEqual(formatLocation(invoice)({ userId: 1, invoiceId: 2 }), '/users
 The function `type` allows to define a new `Match` from a [io-ts](https://github.com/gcanti/io-ts) runtime type
 
 ```ts
-type<K extends string, A>(k: K, type: t.Type<A>, formatter: (a: A) => string): Match<{ [_ in K]: A }>
+type<K extends string, A>(k: K, type: t.Type<A>): Match<{ [_ in K]: A }>
 ```

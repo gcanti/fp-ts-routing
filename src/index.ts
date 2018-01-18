@@ -110,10 +110,10 @@ export const type = <K extends string, A>(k: K, type: t.Type<string, A>): Match<
   )
 
 /** `str` matches any string path component */
-export const str = <K extends string>(k: K): Match<{ [_ in K]: string }> => type(k, t.string)
+export const str = <K extends string>(k: K): Match<{ [_ in K]: string }> => type(k, t.string as any) // TODO fixme
 
 /** `int` matches any integer path component */
-export const int = <K extends string>(k: K): Match<{ [_ in K]: number }> => type(k, IntegerFromString)
+export const int = <K extends string>(k: K): Match<{ [_ in K]: number }> => type(k, IntegerFromString as any) // TODO fixme
 
 /**
  * `lit(x)` will match exactly the path component `x`
@@ -139,5 +139,5 @@ export const query = <T extends t.Any>(type: T): Match<t.TypeOf<T>> =>
         .toOption()
         .map(query => tuple(query, new Route(r.parts, {})))
     ),
-    new Formatter((r, query) => new Route(r.parts, type.serialize(query)))
+    new Formatter((r, query) => new Route(r.parts, type.serialize(query) as any)) // TODO fixme
   )

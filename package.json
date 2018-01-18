@@ -2,7 +2,9 @@
   "name": "fp-ts-routing",
   "version": "0.3.0",
   "description": "A type-safe routing library for TypeScript",
-  "files": ["lib"],
+  "files": [
+    "lib"
+  ],
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "scripts": {
@@ -26,8 +28,8 @@
   "homepage": "https://github.com/gcanti/fp-ts-routing",
   "dependencies": {
     "fp-ts": "^0.6.5",
-    "io-ts": "^0.9.4",
-    "io-ts-types": "^0.2.2"
+    "io-ts": "^0.9.5",
+    "io-ts-types": "^0.2.4"
   },
   "devDependencies": {
     "@types/mocha": "2.2.38",
@@ -40,6 +42,16 @@
     "typescript": "2.6.2",
     "typings-checker": "1.1.2"
   },
-  "tags": ["typescript", "functional-programming", "routing", "applicative"],
-  "keywords": ["typescript", "functional-programming", "routing", "applicative"]
+  "tags": [
+    "typescript",
+    "functional-programming",
+    "routing",
+    "applicative"
+  ],
+  "keywords": [
+    "typescript",
+    "functional-programming",
+    "routing",
+    "applicative"
+  ]
 }

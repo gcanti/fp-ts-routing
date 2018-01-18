@@ -20,7 +20,7 @@ high state of flux, you're at risk of it changing without notice.
 * **Bug Fix**
   * serialize query in `query` (@gcanti)
 * **Internal**
-  * upgrade to io-ts 0.9.4 (@gcanti)
+  * upgrade to io-ts 0.9.5 (@gcanti)
 
 # 0.2.1
 
