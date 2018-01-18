@@ -19,7 +19,9 @@ export class Route {
   static isEmpty = (r: Route) => r.parts.length === 0 && isObjectEmpty(r.query)
   static parse = (s: string): Route => {
     const route: url.Url = url.parse(s, true)
-    const parts = fromNullable(route.pathname).map(s => s.split('/').filter(x => Boolean(x))).getOrElse(() => [])
+    const parts = fromNullable(route.pathname)
+      .map(s => s.split('/').filter(x => Boolean(x)))
+      .getOrElse(() => [])
     return new Route(parts, route.query)
   }
   inspect(): string {
@@ -56,7 +58,11 @@ export class Parser<A> {
 
 export const zero = <A>(): Parser<A> => new Parser(() => none)
 
-export const parse = <A>(parser: Parser<A>, r: Route, a: A): A => parser.run(r).map(([a]) => a).getOrElse(() => a)
+export const parse = <A>(parser: Parser<A>, r: Route, a: A): A =>
+  parser
+    .run(r)
+    .map(([a]) => a)
+    .getOrElse(() => a)
 
 export class Formatter<A> {
   constructor(readonly run: (r: Route, a: A) => Route) {}
@@ -87,27 +93,27 @@ export const end: Match<{}> = new Match(
 )
 
 /** `type` matches any io-ts type path component */
-export const type = <K extends string, A>(
-  k: K,
-  type: t.Type<string, A>,
-  formatter: (a: A) => string
-): Match<{ [_ in K]: A }> =>
+export const type = <K extends string, A>(k: K, type: t.Type<string, A>): Match<{ [_ in K]: A }> =>
   new Match(
     new Parser(r =>
       array.fold(
         () => none,
-        (head, tail) => t.validate(head, type).toOption().map(a => tuple(singleton(k, a), new Route(tail, r.query))),
+        (head, tail) =>
+          t
+            .validate(head, type)
+            .toOption()
+            .map(a => tuple(singleton(k, a), new Route(tail, r.query))),
         r.parts
       )
     ),
-    new Formatter((r, o) => new Route(r.parts.concat(formatter(o[k])), r.query))
+    new Formatter((r, o) => new Route(r.parts.concat(type.serialize(o[k])), r.query))
   )
 
 /** `str` matches any string path component */
-export const str = <K extends string>(k: K): Match<{ [_ in K]: string }> => type(k, t.string, identity)
+export const str = <K extends string>(k: K): Match<{ [_ in K]: string }> => type(k, t.string)
 
 /** `int` matches any integer path component */
-export const int = <K extends string>(k: K): Match<{ [_ in K]: number }> => type(k, IntegerFromString, n => String(n))
+export const int = <K extends string>(k: K): Match<{ [_ in K]: number }> => type(k, IntegerFromString)
 
 /**
  * `lit(x)` will match exactly the path component `x`
@@ -125,10 +131,13 @@ export const lit = (literal: string): Match<{}> =>
     new Formatter((r, n) => new Route(r.parts.concat(literal), r.query))
   )
 
-export const query = <T extends t.InterfaceType<{ [key: string]: t.Type<string, any> }, any>>(
-  type: T
-): Match<t.TypeOf<T>> =>
+export const query = <T extends t.Any>(type: T): Match<t.TypeOf<T>> =>
   new Match(
-    new Parser(r => t.validate(r.query, type).toOption().map(query => tuple(query, new Route(r.parts, {})))),
-    new Formatter((r, query) => new Route(r.parts, query))
+    new Parser(r =>
+      t
+        .validate(r.query, type)
+        .toOption()
+        .map(query => tuple(query, new Route(r.parts, {})))
+    ),
+    new Formatter((r, query) => new Route(r.parts, type.serialize(query)))
   )

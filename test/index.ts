@@ -1,6 +1,7 @@
 import * as assert from 'assert'
 import { lit, int, end, zero, parse, Route, Match, str, query } from '../src'
 import { IntegerFromString } from 'io-ts-types/lib/number/IntegerFromString'
+import { DateFromISOString } from 'io-ts-types/lib/Date/DateFromISOString'
 import * as t from 'io-ts'
 
 //
@@ -61,7 +62,10 @@ const defaults = end
 const home = lit('home').then(end)
 const _user = lit('users').then(int('userId'))
 const user = _user.then(end)
-const invoice = _user.then(lit('invoice')).then(int('invoiceId')).then(end)
+const invoice = _user
+  .then(lit('invoice'))
+  .then(int('invoiceId'))
+  .then(end)
 
 // router
 const router = zero<Location>()
@@ -106,19 +110,34 @@ describe('Route.parse', () => {
 
 describe('parsers', () => {
   it('str', () => {
-    assert.strictEqual(str('id').parser.run(Route.parse('/astring')).exists(([{ id }]) => id === 'astring'), true)
+    assert.strictEqual(
+      str('id')
+        .parser.run(Route.parse('/astring'))
+        .exists(([{ id }]) => id === 'astring'),
+      true
+    )
   })
 
   it('int', () => {
-    assert.strictEqual(int('id').parser.run(Route.parse('/1')).exists(([{ id }]) => id === 1), true)
+    assert.strictEqual(
+      int('id')
+        .parser.run(Route.parse('/1'))
+        .exists(([{ id }]) => id === 1),
+      true
+    )
   })
 
   it('query', () => {
     assert.strictEqual(
-      query(t.interface({ a: t.string, b: IntegerFromString })).parser
-        .run(Route.parse('/foo/bar/?a=baz&b=1'))
+      query(t.interface({ a: t.string, b: IntegerFromString }))
+        .parser.run(Route.parse('/foo/bar/?a=baz&b=1'))
         .exists(([{ a, b }]) => a === 'baz' && b === 1),
       true
+    )
+    const date = '2018-01-18T14:51:47.912Z'
+    assert.deepEqual(
+      query(t.interface({ a: DateFromISOString })).formatter.run(Route.empty, { a: new Date(date) }),
+      new Route([], { a: date })
     )
   })
 
