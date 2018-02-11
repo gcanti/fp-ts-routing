@@ -10,7 +10,7 @@
   "scripts": {
     "lint": "tslint src/**/*.ts test/**/*.ts",
     "typings-checker": "typings-checker --allow-expect-error --project typings-checker/tsconfig.json typings-checker/index.ts",
-    "mocha": "mocha -r ts-node/register test/*.ts",
+    "mocha": "TS_NODE_CACHE=false mocha -r ts-node/register test/*.ts",
     "prettier": "prettier --no-semi --single-quote --print-width 120 --parser typescript --list-different \"{src,test}/**/*.ts\"",
     "test": "npm run prettier && npm run lint && npm run typings-checker && npm run mocha",
     "clean": "rm -rf lib/*",
@@ -27,9 +27,9 @@
   },
   "homepage": "https://github.com/gcanti/fp-ts-routing",
   "dependencies": {
-    "fp-ts": "^0.6.5",
-    "io-ts": "^0.9.5",
-    "io-ts-types": "^0.2.4"
+    "fp-ts": "^1.0.0",
+    "io-ts": "^1.0.0",
+    "io-ts-types": "^0.3.0"
   },
   "devDependencies": {
     "@types/mocha": "2.2.38",
