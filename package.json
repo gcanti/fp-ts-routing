@@ -1,12 +1,12 @@
 {
   "name": "fp-ts-routing",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A type-safe routing library for TypeScript",
   "files": ["lib"],
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "scripts": {
-    "lint": "tslint src/**/*.ts test/**/*.ts",
+    "lint": "tslint -p tsconfig.json src/**/*.ts test/**/*.ts",
     "typings-checker":
       "typings-checker --allow-expect-error --project typings-checker/tsconfig.json typings-checker/index.ts",
     "mocha": "TS_NODE_CACHE=false mocha -r ts-node/register test/*.ts",
@@ -39,10 +39,10 @@
     "mocha": "3.2.0",
     "prettier": "^1.11.0",
     "ts-node": "3.3.0",
-    "tslint": "4.4.2",
-    "tslint-config-standard": "4.0.0",
-    "typescript": "2.6.2",
-    "typings-checker": "1.1.2"
+    "tslint": "^5.9.1",
+    "tslint-config-standard": "^7.0.0",
+    "typescript": "^2.7.2",
+    "typings-checker": "^2.0.0"
   },
   "tags": ["typescript", "functional-programming", "routing", "applicative"],
   "keywords": ["typescript", "functional-programming", "routing", "applicative"]
