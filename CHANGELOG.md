@@ -16,7 +16,7 @@ high state of flux, you're at risk of it changing without notice.
 # 0.3.1
 
 * **New Feature**
-  * statically avoid duplicate keys (@gcanti)
+  * statically avoid overlapping keys (@gcanti)
 
 # 0.3.0
 
