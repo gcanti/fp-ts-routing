@@ -40,64 +40,59 @@ export class Route {
 const assign = <A>(a: A) => <B>(b: B): A & B => Object.assign({}, a, b)
 
 /**
- * Encodes the constraint that a given row
- * does not contain specific keys
+ * Encodes the constraint that a given object `O`
+ * does not contain specific keys `K`
  */
-export type RowLacks<Keys extends string, Row> = Row &
-  {
-    [K in ({ [K in keyof Row]: K } & {
-      [K: string]: never
-    })[Keys]]: never
-  }
+export type RowLacks<O extends object, K extends string | number | symbol> = O & Record<Extract<keyof O, K>, never>
 
-export class Parser<A> {
+export class Parser<A extends object> {
   readonly _A!: A
   constructor(readonly run: (r: Route) => Option<[A, Route]>) {}
-  static of = <A>(a: A): Parser<A> => new Parser(s => some(tuple(a, s)))
-  map<B>(f: (a: A) => B): Parser<B> {
+  static of = <A extends object>(a: A): Parser<A> => new Parser(s => some(tuple(a, s)))
+  map<B extends object>(f: (a: A) => B): Parser<B> {
     return this.chain(a => Parser.of(f(a))) // <= derived
   }
-  ap<B>(fab: Parser<(a: A) => B>): Parser<B> {
+  ap<B extends object>(fab: Parser<(a: A) => B>): Parser<B> {
     return fab.chain(f => this.map(f)) // <= derived
   }
-  chain<B>(f: (a: A) => Parser<B>): Parser<B> {
+  chain<B extends object>(f: (a: A) => Parser<B>): Parser<B> {
     return new Parser(r => this.run(r).chain(([a, r2]) => f(a).run(r2)))
   }
   alt(that: Parser<A>): Parser<A> {
     return new Parser(r => this.run(r).alt(that.run(r)))
   }
   /** A mapped Monoidal.mult */
-  then<B>(that: Parser<RowLacks<keyof A, B>>): Parser<A & B> {
+  then<B extends object>(that: Parser<RowLacks<B, keyof A>>): Parser<A & B> {
     return that.ap(this.map(assign as (a: A) => (b: B) => A & B))
   }
 }
 
-export const zero = <A>(): Parser<A> => new Parser(() => none)
+export const zero = <A extends object>(): Parser<A> => new Parser(() => none)
 
-export const parse = <A>(parser: Parser<A>, r: Route, a: A): A =>
+export const parse = <A extends object>(parser: Parser<A>, r: Route, a: A): A =>
   parser
     .run(r)
     .map(([a]) => a)
     .getOrElse(a)
 
-export class Formatter<A> {
+export class Formatter<A extends object> {
   readonly _A!: A
   constructor(readonly run: (r: Route, a: A) => Route) {}
-  contramap<B>(f: (b: B) => A): Formatter<B> {
+  contramap<B extends object>(f: (b: B) => A): Formatter<B> {
     return new Formatter((r, b) => this.run(r, f(b)))
   }
-  then<B>(that: Formatter<B> & Formatter<RowLacks<keyof A, B>>): Formatter<A & B> {
+  then<B extends object>(that: Formatter<B> & Formatter<RowLacks<B, keyof A>>): Formatter<A & B> {
     return new Formatter((r, ab) => that.run(this.run(r, ab), ab))
   }
 }
 
-export class Match<A> {
+export class Match<A extends object> {
   readonly _A!: A
   constructor(readonly parser: Parser<A>, readonly formatter: Formatter<A>) {}
-  imap<B>(f: (a: A) => B, g: (b: B) => A): Match<B> {
+  imap<B extends object>(f: (a: A) => B, g: (b: B) => A): Match<B> {
     return new Match(this.parser.map(f), this.formatter.contramap(g))
   }
-  then<B>(that: Match<B> & Match<RowLacks<keyof A, B>>): Match<A & B> {
+  then<B extends object>(that: Match<B> & Match<RowLacks<B, keyof A>>): Match<A & B> {
     const p = this.parser.then(that.parser)
     const f = this.formatter.then(that.formatter)
     return new Match(p, f)
@@ -141,7 +136,7 @@ export const lit = (literal: string): Match<{}> =>
     new Formatter((r, n) => new Route(r.parts.concat(literal), r.query))
   )
 
-export const query = <A>(type: t.Type<A, Query>): Match<A> =>
+export const query = <A extends object>(type: t.Type<A, Query>): Match<A> =>
   new Match(
     new Parser(r => fromEither(type.decode(r.query)).map(query => tuple(query, new Route(r.parts, {})))),
     new Formatter((r, query) => new Route(r.parts, type.encode(query)))
