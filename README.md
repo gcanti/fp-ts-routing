@@ -59,7 +59,7 @@ const router = zero<Location>()
 //
 
 const parseLocation = (s: string): Location => parse(router, Route.parse(s), NotFound.value)
-const formatLocation = <A>(match: Match<A>) => (location: A): string =>
+const formatLocation = <A extends object>(match: Match<A>) => (location: A): string =>
   match.formatter.run(Route.empty, location).toString()
 
 import * as assert from 'assert'

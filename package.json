@@ -1,20 +1,19 @@
 {
   "name": "fp-ts-routing",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A type-safe routing library for TypeScript",
-  "files": ["lib"],
+  "files": [
+    "lib"
+  ],
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "scripts": {
     "lint": "tslint -p tsconfig.json src/**/*.ts test/**/*.ts",
-    "typings-checker":
-      "typings-checker --allow-expect-error --project typings-checker/tsconfig.json typings-checker/index.ts",
-    "mocha": "TS_NODE_CACHE=false mocha -r ts-node/register test/*.ts",
-    "prettier":
-      "prettier --no-semi --single-quote --print-width 120 --parser typescript --list-different \"{src,test}/**/*.ts\"",
-    "fix-prettier":
-      "prettier --no-semi --single-quote --print-width 120 --parser typescript --write \"{src,test}/**/*.ts\"",
-    "test": "npm run prettier && npm run lint && npm run typings-checker && npm run mocha",
+    "typings-checker": "typings-checker --allow-expect-error --project typings-checker/tsconfig.json typings-checker/index.ts",
+    "jest": "jest",
+    "prettier": "prettier --no-semi --single-quote --print-width 120 --parser typescript --list-different \"{src,test}/**/*.ts\"",
+    "fix-prettier": "prettier --no-semi --single-quote --print-width 120 --parser typescript --write \"{src,test}/**/*.ts\"",
+    "test": "npm run prettier && npm run lint && npm run typings-checker && npm run jest",
     "clean": "rm -rf lib/*",
     "build": "npm run clean && tsc"
   },
@@ -30,20 +29,50 @@
   "homepage": "https://github.com/gcanti/fp-ts-routing",
   "dependencies": {
     "fp-ts": "^1.0.0",
-    "io-ts": "^1.0.0",
+    "io-ts": "^1.1.5",
     "io-ts-types": "^0.3.0"
   },
   "devDependencies": {
-    "@types/mocha": "2.2.38",
+    "@types/jest": "^22.2.2",
     "@types/node": "8.0.19",
-    "mocha": "3.2.0",
-    "prettier": "^1.11.0",
+    "jest": "^22.4.3",
+    "prettier": "^1.13.5",
+    "ts-jest": "^22.4.2",
     "ts-node": "3.3.0",
     "tslint": "^5.9.1",
     "tslint-config-standard": "^7.0.0",
-    "typescript": "^2.7.2",
+    "typescript": "^2.9.2",
     "typings-checker": "^2.0.0"
   },
-  "tags": ["typescript", "functional-programming", "routing", "applicative"],
-  "keywords": ["typescript", "functional-programming", "routing", "applicative"]
+  "tags": [
+    "typescript",
+    "functional-programming",
+    "routing",
+    "applicative"
+  ],
+  "keywords": [
+    "typescript",
+    "functional-programming",
+    "routing",
+    "applicative"
+  ],
+  "jest": {
+    "globals": {
+      "ts-jest": {
+        "skipBabel": true
+      }
+    },
+    "collectCoverage": true,
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "test",
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "testPathIgnorePatterns": [
+      "helpers.ts"
+    ]
+  }
 }
