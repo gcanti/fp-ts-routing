@@ -14,7 +14,7 @@ const isObjectEmpty = (o: object): boolean => {
 }
 
 export interface Query {
-  [key: string]: string
+  [key: string]: string | Array<string>
 }
 
 export class Route {
@@ -22,7 +22,7 @@ export class Route {
   constructor(readonly parts: Array<string>, readonly query: Query) {}
   static isEmpty = (r: Route) => r.parts.length === 0 && isObjectEmpty(r.query)
   static parse = (s: string): Route => {
-    const route: url.Url = url.parse(s, true)
+    const route = url.parse(s, true)
     const parts = fromNullable(route.pathname)
       .map(s => s.split('/').filter(Boolean))
       .getOrElse([])
