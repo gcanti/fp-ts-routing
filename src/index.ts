@@ -24,7 +24,12 @@ export class Route {
   static parse = (s: string): Route => {
     const route = url.parse(s, true)
     const parts = fromNullable(route.pathname)
-      .map(s => s.split('/').filter(Boolean))
+      .map(s =>
+        s
+          .split('/')
+          .filter(Boolean)
+          .map(decodeURIComponent)
+      )
       .getOrElse([])
     return new Route(parts, route.query)
   }
@@ -33,7 +38,7 @@ export class Route {
   }
   toString(): string {
     const qs = querystring.stringify(this.query)
-    return '/' + this.parts.join('/') + (qs ? '?' + qs : '')
+    return '/' + this.parts.map(encodeURIComponent).join('/') + (qs ? '?' + qs : '')
   }
 }
 

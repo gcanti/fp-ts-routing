@@ -1,8 +1,9 @@
 import * as assert from 'assert'
-import { lit, int, end, zero, parse, Route, Match, str, query } from '../src'
-import { IntegerFromString } from 'io-ts-types/lib/number/IntegerFromString'
-import { DateFromISOString } from 'io-ts-types/lib/Date/DateFromISOString'
 import * as t from 'io-ts'
+import { DateFromISOString } from 'io-ts-types/lib/Date/DateFromISOString'
+import { IntegerFromString } from 'io-ts-types/lib/number/IntegerFromString'
+import { some } from '../node_modules/fp-ts/lib/Option'
+import { end, int, lit, Match, parse, query, Route, str, type, zero } from '../src'
 
 //
 // usage
@@ -79,7 +80,7 @@ const parseLocation = (s: string): Location => parse(router, Route.parse(s), Not
 const formatLocation = <A extends object>(match: Match<A>) => (location: A): string =>
   match.formatter.run(Route.empty, location).toString()
 
-describe('Route.parse', () => {
+describe('Route', () => {
   it('should parse a path', () => {
     assert.deepEqual(Route.parse('/'), {
       parts: [],
@@ -99,16 +100,51 @@ describe('Route.parse', () => {
     })
     assert.deepEqual(Route.parse('/foo/bar?a=1'), {
       parts: ['foo', 'bar'],
-      query: { a: 1 }
+      query: { a: '1' }
     })
     assert.deepEqual(Route.parse('/foo/bar/?a=1'), {
       parts: ['foo', 'bar'],
-      query: { a: 1 }
+      query: { a: '1' }
     })
+    assert.deepEqual(Route.parse('/a%20b'), {
+      parts: ['a b'],
+      query: {}
+    })
+    assert.deepEqual(Route.parse('/foo?a=b%20c'), {
+      parts: ['foo'],
+      query: { a: 'b c' }
+    })
+  })
+
+  it('should format', () => {
+    assert.strictEqual(new Route([], {}).toString(), '/')
+    assert.strictEqual(new Route(['a'], {}).toString(), '/a')
+    assert.strictEqual(new Route(['a'], { b: 'b' }).toString(), '/a?b=b')
+    assert.strictEqual(new Route(['a'], { b: 'b c' }).toString(), '/a?b=b%20c')
+    assert.strictEqual(new Route(['a c'], { b: 'b' }).toString(), '/a%20c?b=b')
+  })
+
+  it('parse and format should be inverse functions', () => {
+    const path = '/a%20c?b=b%20c'
+    assert.strictEqual(Route.parse(path).toString(), path)
   })
 })
 
 describe('parsers', () => {
+  it('type', () => {
+    const T = t.keyof({
+      a: null,
+      b: null,
+      c: null
+    })
+    const match = lit('search')
+      .then(type('topic', T))
+      .then(end)
+    assert.deepEqual(match.parser.run(Route.parse('/search/a')), some([{ topic: 'a' }, { parts: [], query: {} }]))
+    assert.deepEqual(match.parser.run(Route.parse('/search/b')), some([{ topic: 'b' }, { parts: [], query: {} }]))
+    assert.deepEqual(match.parser.run(Route.parse('/search/c')), some([{ topic: 'c' }, { parts: [], query: {} }]))
+  })
+
   it('str', () => {
     assert.strictEqual(
       str('id')
