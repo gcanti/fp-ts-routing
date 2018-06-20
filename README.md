@@ -1,7 +1,7 @@
 # Usage
 
 ```ts
-import { lit, int, end, zero, Route, parse, Match } from 'fp-ts-routing'
+import { lit, int, end, zero, Route, parse, format } from 'fp-ts-routing'
 
 //
 // locations
@@ -31,36 +31,25 @@ class NotFound {
 
 type Location = Home | User | Invoice | NotFound
 
-//
 // matches
-//
-
 const defaults = end
 const home = lit('home').then(end)
-const _user = lit('users').then(int('userId'))
-const user = _user.then(end)
-const invoice = _user
+const userId = lit('users').then(int('userId'))
+const user = userId.then(end)
+const invoice = userId
   .then(lit('invoice'))
   .then(int('invoiceId'))
   .then(end)
 
-//
 // router
-//
-
 const router = zero<Location>()
   .alt(defaults.parser.map(() => Home.value))
   .alt(home.parser.map(() => Home.value))
   .alt(user.parser.map(({ userId }) => new User(userId)))
   .alt(invoice.parser.map(({ userId, invoiceId }) => new Invoice(userId, invoiceId)))
 
-//
-// helpers
-//
-
+// helper
 const parseLocation = (s: string): Location => parse(router, Route.parse(s), NotFound.value)
-const formatLocation = <A extends object>(match: Match<A>) => (location: A): string =>
-  match.formatter.run(Route.empty, location).toString()
 
 import * as assert from 'assert'
 
@@ -78,8 +67,8 @@ assert.strictEqual(parseLocation('/foo'), NotFound.value)
 // formatters
 //
 
-assert.strictEqual(formatLocation(user)({ userId: 1 }), '/users/1')
-assert.strictEqual(formatLocation(invoice)({ userId: 1, invoiceId: 2 }), '/users/1/invoice/2')
+assert.strictEqual(format(user.formatter, { userId: 1 }), '/users/1')
+assert.strictEqual(format(invoice.formatter, { userId: 1, invoiceId: 2 }), '/users/1/invoice/2')
 ```
 
 # Defining new matches via io-ts types

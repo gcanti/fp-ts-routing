@@ -80,6 +80,9 @@ export const parse = <A extends object>(parser: Parser<A>, r: Route, a: A): A =>
     .map(([a]) => a)
     .getOrElse(a)
 
+export const format = <A extends object>(formatter: Formatter<A>, a: A): string =>
+  formatter.run(Route.empty, a).toString()
+
 export class Formatter<A extends object> {
   readonly _A!: A
   constructor(readonly run: (r: Route, a: A) => Route) {}
