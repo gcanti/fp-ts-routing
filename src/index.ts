@@ -25,17 +25,16 @@ export class Route {
     const route = url.parse(s, true)
     const parts = fromNullable(route.pathname)
       .map(s =>
-        s
+        decodeURI(s)
           .split('/')
           .filter(Boolean)
-          .map(decodeURIComponent)
       )
       .getOrElse([])
     return new Route(parts, route.query)
   }
   toString(): string {
     const qs = querystring.stringify(this.query)
-    return '/' + this.parts.map(encodeURIComponent).join('/') + (qs ? '?' + qs : '')
+    return encodeURI('/' + this.parts.join('/')) + (qs ? '?' + qs : '')
   }
 }
 
