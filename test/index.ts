@@ -39,6 +39,22 @@ describe('Route', () => {
       parts: ['foo'],
       query: { a: 'b c' }
     })
+    assert.deepEqual(Route.parse('/@a'), {
+      parts: ['@a'],
+      query: {}
+    })
+    assert.deepEqual(Route.parse('/%40a'), {
+      parts: ['@a'],
+      query: {}
+    })
+    assert.deepEqual(Route.parse('/?a=@b'), {
+      parts: [],
+      query: { a: '@b' }
+    })
+    assert.deepEqual(Route.parse('/?@a=b'), {
+      parts: [],
+      query: { '@a': 'b' }
+    })
   })
 
   it('toString', () => {
@@ -47,6 +63,10 @@ describe('Route', () => {
     assert.strictEqual(new Route(['a'], { b: 'b' }).toString(), '/a?b=b')
     assert.strictEqual(new Route(['a'], { b: 'b c' }).toString(), '/a?b=b%20c')
     assert.strictEqual(new Route(['a c'], { b: 'b' }).toString(), '/a%20c?b=b')
+    assert.strictEqual(new Route(['@a'], {}).toString(), '/%40a')
+    assert.strictEqual(new Route(['a&b'], {}).toString(), '/a%26b')
+    assert.strictEqual(new Route([], { a: '@b' }).toString(), '/?a=%40b')
+    assert.strictEqual(new Route([], { '@a': 'b' }).toString(), '/?%40a=b')
   })
 
   it('parse and toString should be inverse functions', () => {
