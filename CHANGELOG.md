@@ -13,6 +13,15 @@
 **Note**: Gaps between patch versions are faulty/broken releases. **Note**: A feature tagged as Experimental is in a
 high state of flux, you're at risk of it changing without notice.
 
+# 0.3.3
+
+- **New Feature**
+  - add `format` function (@gcanti)
+- **Bug Fix**
+  - decode/encode pathname parts, fix #12 (@gcanti)
+- **Inernal**
+  - remove `Route.prototype.inspect` (@gcanti)
+
 # 0.3.2
 
 - **Internal**
