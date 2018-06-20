@@ -33,9 +33,6 @@ export class Route {
       .getOrElse([])
     return new Route(parts, route.query)
   }
-  inspect(): string {
-    return this.toString()
-  }
   toString(): string {
     const qs = querystring.stringify(this.query)
     return '/' + this.parts.map(encodeURIComponent).join('/') + (qs ? '?' + qs : '')
