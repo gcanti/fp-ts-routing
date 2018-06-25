@@ -21,21 +21,20 @@ export class Route {
   static empty = new Route([], {})
   constructor(readonly parts: Array<string>, readonly query: Query) {}
   static isEmpty = (r: Route) => r.parts.length === 0 && isObjectEmpty(r.query)
-  static parse = (s: string): Route => {
+  static parse = (s: string, decode: boolean = true): Route => {
     const route = url.parse(s, true)
     const parts = fromNullable(route.pathname)
-      .map(s =>
-        s
-          .split('/')
-          .filter(Boolean)
-          .map(decodeURIComponent)
-      )
+      .map(s => {
+        const r = s.split('/').filter(Boolean)
+        return decode ? r.map(decodeURIComponent) : r
+      })
       .getOrElse([])
     return new Route(parts, route.query)
   }
-  toString(): string {
+  toString(encode: boolean = true): string {
     const qs = querystring.stringify(this.query)
-    return '/' + this.parts.map(encodeURIComponent).join('/') + (qs ? '?' + qs : '')
+    const parts = encode ? this.parts.map(encodeURIComponent) : this.parts
+    return '/' + parts.join('/') + (qs ? '?' + qs : '')
   }
 }
 
@@ -77,8 +76,8 @@ export const parse = <A extends object>(parser: Parser<A>, r: Route, a: A): A =>
     .map(([a]) => a)
     .getOrElse(a)
 
-export const format = <A extends object>(formatter: Formatter<A>, a: A): string =>
-  formatter.run(Route.empty, a).toString()
+export const format = <A extends object>(formatter: Formatter<A>, a: A, encode: boolean = true): string =>
+  formatter.run(Route.empty, a).toString(encode)
 
 export class Formatter<A extends object> {
   readonly _A!: A
