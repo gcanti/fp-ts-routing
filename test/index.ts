@@ -57,6 +57,13 @@ describe('Route', () => {
     })
   })
 
+  it('parse (decode = false)', () => {
+    assert.deepEqual(Route.parse('/%40a', false), {
+      parts: ['%40a'],
+      query: {}
+    })
+  })
+
   it('toString', () => {
     assert.strictEqual(new Route([], {}).toString(), '/')
     assert.strictEqual(new Route(['a'], {}).toString(), '/a')
@@ -67,6 +74,10 @@ describe('Route', () => {
     assert.strictEqual(new Route(['a&b'], {}).toString(), '/a%26b')
     assert.strictEqual(new Route([], { a: '@b' }).toString(), '/?a=%40b')
     assert.strictEqual(new Route([], { '@a': 'b' }).toString(), '/?%40a=b')
+  })
+
+  it('toString (encode = false)', () => {
+    assert.strictEqual(new Route(['@a'], {}).toString(false), '/@a')
   })
 
   it('parse and toString should be inverse functions', () => {
@@ -81,11 +92,18 @@ describe('Route', () => {
   })
 })
 
+describe('format', () => {
+  it('encode = false', () => {
+    const x = str('username')
+    assert.strictEqual(format(x.formatter, { username: '@giulio' }, false), '/@giulio')
+  })
+})
+
 describe('Formatter', () => {
   it('contramap', () => {
     const x = new Formatter((r, a: { foo: number }) => new Route(r.parts.concat(String(a.foo)), r.query))
     const y = x.contramap((b: { bar: string }) => ({ foo: b.bar.length }))
-    assert.strictEqual(format(y, { bar: 'baz' }).toString(), '/3')
+    assert.strictEqual(format(y, { bar: 'baz' }), '/3')
   })
 })
 
@@ -94,7 +112,7 @@ describe('Match', () => {
     const x = str('id')
     const y = x.imap(({ id }) => ({ userId: id }), ({ userId }) => ({ id: userId }))
     assert.deepEqual(parse(y.parser, Route.parse('/1'), { userId: '0' }), { userId: '1' })
-    assert.strictEqual(format(y.formatter, { userId: '1' }).toString(), '/1')
+    assert.strictEqual(format(y.formatter, { userId: '1' }), '/1')
   })
 })
 
