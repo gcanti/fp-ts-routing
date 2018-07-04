@@ -2,7 +2,7 @@ import * as assert from 'assert'
 import * as t from 'io-ts'
 import { DateFromISOString } from 'io-ts-types/lib/Date/DateFromISOString'
 import { IntegerFromString } from 'io-ts-types/lib/number/IntegerFromString'
-import { some } from '../node_modules/fp-ts/lib/Option'
+import { some, none } from 'fp-ts/lib/Option'
 import { end, format, int, lit, parse, query, Route, str, type, zero, Formatter } from '../src'
 
 describe('Route', () => {
@@ -147,6 +147,7 @@ describe('parsers', () => {
         .exists(([{ id }]) => id === 1),
       true
     )
+    assert.deepEqual(int('id').parser.run(Route.parse('/1a')), none)
   })
 
   it('query', () => {
@@ -161,6 +162,17 @@ describe('parsers', () => {
       query(t.interface({ a: DateFromISOString })).formatter.run(Route.empty, { a: new Date(date) }),
       new Route([], { a: date })
     )
+  })
+
+  it('end', () => {
+    const match = end
+    assert.deepEqual(match.parser.run(Route.parse('/')), some([{}, { parts: [], query: {} }]))
+    assert.deepEqual(match.parser.run(Route.parse('/a')), none)
+  })
+
+  it('lit', () => {
+    const match = lit('subview')
+    assert.deepEqual(match.parser.run(Route.parse('/subview/')), some([{}, { parts: [], query: {} }]))
   })
 })
 
