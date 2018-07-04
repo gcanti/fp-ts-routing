@@ -1,6 +1,6 @@
 {
   "name": "fp-ts-routing",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "A type-safe routing library for TypeScript",
   "files": [
     "lib"
@@ -30,7 +30,7 @@
   "dependencies": {
     "fp-ts": "^1.0.0",
     "io-ts": "^1.1.5",
-    "io-ts-types": "^0.3.0"
+    "io-ts-types": "^0.3.6"
   },
   "devDependencies": {
     "@types/jest": "^22.2.2",
