@@ -92,14 +92,41 @@ export class Formatter<A extends object> {
 
 export class Match<A extends object> {
   readonly _A!: A
-  constructor(readonly parser: Parser<A>, readonly formatter: Formatter<A>) {}
+  constructor(readonly parser: Parser<A>, readonly formatter: Formatter<A>, readonly revealer: Revealer) {}
   imap<B extends object>(f: (a: A) => B, g: (b: B) => A): Match<B> {
-    return new Match(this.parser.map(f), this.formatter.contramap(g))
+    return new Match(this.parser.map(f), this.formatter.contramap(g), this.revealer)
   }
   then<B extends object>(that: Match<B> & Match<RowLacks<B, keyof A>>): Match<A & B> {
     const p = this.parser.then(that.parser)
     const f = this.formatter.then(that.formatter)
-    return new Match(p, f)
+    const r = this.revealer.then(that.revealer)
+    return new Match(p, f, r)
+  }
+}
+
+export class LitPart {
+  constructor(readonly value: string) {}
+}
+
+export class TypePart {
+  constructor(readonly name: string, readonly type: t.Type<any, string>) {}
+}
+
+export class QueryPart {
+  constructor(readonly type: t.Type<any, Query>) {}
+}
+
+type Part = LitPart | TypePart | QueryPart
+
+/**
+ * Provides introspection capability on the Match structure
+ */
+
+export class Revealer {
+  constructor(readonly parts: Part[]) {}
+
+  then<B extends object>(that: Revealer): Revealer {
+    return new Revealer(this.parts.concat(that.parts))
   }
 }
 
@@ -107,12 +134,13 @@ const singleton = <K extends string, V>(k: K, v: V): { [_ in K]: V } => ({ [k as
 
 /** `succeed` matches everything but consumes nothing */
 export const succeed = <A extends object>(a: A): Match<A> =>
-  new Match(new Parser(r => some(tuple(a, r))), new Formatter(identity))
+  new Match(new Parser(r => some(tuple(a, r))), new Formatter(identity), new Revealer([]))
 
 /** `end` matches the end of a route */
 export const end: Match<{}> = new Match(
   new Parser(r => (Route.isEmpty(r) ? some(tuple({}, r)) : none)),
-  new Formatter(identity)
+  new Formatter(identity),
+  new Revealer([])
 )
 
 /** `type` matches any io-ts type path component */
@@ -123,7 +151,8 @@ export const type = <K extends string, A>(k: K, type: t.Type<A, string>): Match<
         fromEither(type.decode(head)).map(a => tuple(singleton(k, a), new Route(tail, r.query)))
       )
     ),
-    new Formatter((r, o) => new Route(r.parts.concat(type.encode(o[k])), r.query))
+    new Formatter((r, o) => new Route(r.parts.concat(type.encode(o[k])), r.query)),
+    new Revealer([new TypePart(k, type)])
   )
 
 /** `str` matches any string path component */
@@ -141,11 +170,13 @@ export const lit = (literal: string): Match<{}> =>
     new Parser(r =>
       array.fold(r.parts, none, (head, tail) => (head === literal ? some(tuple({}, new Route(tail, r.query))) : none))
     ),
-    new Formatter((r, n) => new Route(r.parts.concat(literal), r.query))
+    new Formatter((r, n) => new Route(r.parts.concat(literal), r.query)),
+    new Revealer([new LitPart(literal)])
   )
 
 export const query = <A extends object>(type: t.Type<A, Query>): Match<A> =>
   new Match(
     new Parser(r => fromEither(type.decode(r.query)).map(query => tuple(query, new Route(r.parts, {})))),
-    new Formatter((r, query) => new Route(r.parts, type.encode(query)))
+    new Formatter((r, query) => new Route(r.parts, type.encode(query))),
+    new Revealer([new QueryPart(type)])
   )

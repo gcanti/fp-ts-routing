@@ -3,7 +3,23 @@ import * as t from 'io-ts'
 import { DateFromISOString } from 'io-ts-types/lib/Date/DateFromISOString'
 import { IntegerFromString } from 'io-ts-types/lib/number/IntegerFromString'
 import { some, none } from 'fp-ts/lib/Option'
-import { end, format, int, lit, parse, query, Route, str, type, zero, Formatter, succeed } from '../src'
+import {
+  end,
+  format,
+  int,
+  lit,
+  parse,
+  query,
+  Route,
+  str,
+  type,
+  zero,
+  Formatter,
+  LitPart,
+  TypePart,
+  QueryPart,
+  succeed
+} from '../src'
 
 describe('Route', () => {
   it('parse', () => {
@@ -186,6 +202,24 @@ describe('parsers', () => {
   it('lit', () => {
     const match = lit('subview')
     assert.deepEqual(match.parser.run(Route.parse('/subview/')), some([{}, { parts: [], query: {} }]))
+  })
+})
+
+describe('revealer', () => {
+  it('should expose the parts of the match', () => {
+    const QueryType = t.interface({ country: t.string })
+    const match = lit('users')
+      .then(int('userId'))
+      .then(query(QueryType))
+
+    assert.equal(match.revealer.parts.length, 3)
+    const [first, second, third] = match.revealer.parts
+
+    assert.equal(first instanceof LitPart && first.value, 'users')
+    assert.equal(second instanceof TypePart && second.name, 'userId')
+    assert.equal(second instanceof TypePart && second.type, IntegerFromString)
+
+    assert.equal(third instanceof QueryPart && third.type, QueryType)
   })
 })
 
