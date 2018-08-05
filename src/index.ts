@@ -105,6 +105,12 @@ export class Match<A extends object> {
 
 const singleton = <K extends string, V>(k: K, v: V): { [_ in K]: V } => ({ [k as any]: v } as any)
 
+/** `succeed` matches everything but consumes nothing */
+export const succeed = new Match(
+  new Parser((r: Route) => some([{}, r] as [{}, Route])),
+  new Formatter((r, _n) => new Route(r.parts, r.query))
+)
+
 /** `end` matches the end of a route */
 export const end: Match<{}> = new Match(
   new Parser(r => (Route.isEmpty(r) ? some(tuple({}, r)) : none)),

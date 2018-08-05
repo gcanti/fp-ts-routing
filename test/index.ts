@@ -3,7 +3,7 @@ import * as t from 'io-ts'
 import { DateFromISOString } from 'io-ts-types/lib/Date/DateFromISOString'
 import { IntegerFromString } from 'io-ts-types/lib/number/IntegerFromString'
 import { some, none } from 'fp-ts/lib/Option'
-import { end, format, int, lit, parse, query, Route, str, type, zero, Formatter } from '../src'
+import { end, format, int, lit, parse, query, Route, str, type, zero, Formatter, succeed } from '../src'
 
 describe('Route', () => {
   it('parse', () => {
@@ -111,7 +111,9 @@ describe('Match', () => {
   it('imap', () => {
     const x = str('id')
     const y = x.imap(({ id }) => ({ userId: id }), ({ userId }) => ({ id: userId }))
-    assert.deepEqual(parse(y.parser, Route.parse('/1'), { userId: '0' }), { userId: '1' })
+    assert.deepEqual(parse(y.parser, Route.parse('/1'), { userId: '0' }), {
+      userId: '1'
+    })
     assert.strictEqual(format(y.formatter, { userId: '1' }), '/1')
   })
 })
@@ -159,9 +161,17 @@ describe('parsers', () => {
     )
     const date = '2018-01-18T14:51:47.912Z'
     assert.deepEqual(
-      query(t.interface({ a: DateFromISOString })).formatter.run(Route.empty, { a: new Date(date) }),
+      query(t.interface({ a: DateFromISOString })).formatter.run(Route.empty, {
+        a: new Date(date)
+      }),
       new Route([], { a: date })
     )
+  })
+
+  it('succeed', () => {
+    const match = succeed
+    assert.deepEqual(match.parser.run(Route.parse('/')), some([{}, { parts: [], query: {} }]))
+    assert.deepEqual(match.parser.run(Route.parse('/a')), some([{}, { parts: ['a'], query: {} }]))
   })
 
   it('end', () => {
