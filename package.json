@@ -81,6 +81,7 @@
         "lines": 100,
         "statements": 0
       }
-    }
+    },
+    "testEnvironment": "node"
   }
 }
