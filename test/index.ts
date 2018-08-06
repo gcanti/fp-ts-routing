@@ -169,9 +169,12 @@ describe('parsers', () => {
   })
 
   it('succeed', () => {
-    const match = succeed
-    assert.deepEqual(match.parser.run(Route.parse('/')), some([{}, { parts: [], query: {} }]))
-    assert.deepEqual(match.parser.run(Route.parse('/a')), some([{}, { parts: ['a'], query: {} }]))
+    assert.deepEqual(succeed({}).parser.run(Route.parse('/')), some([{}, { parts: [], query: {} }]))
+    assert.deepEqual(succeed({}).parser.run(Route.parse('/a')), some([{}, { parts: ['a'], query: {} }]))
+    assert.deepEqual(
+      succeed({ meaning: 42 }).parser.run(Route.parse('/a')),
+      some([{ meaning: 42 }, { parts: ['a'], query: {} }])
+    )
   })
 
   it('end', () => {
