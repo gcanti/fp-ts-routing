@@ -1,3 +1,7 @@
+# TypeScript compatibility
+
+The stable version is tested against TypeScript 3.1.6
+
 # Usage
 
 ```ts
@@ -71,7 +75,7 @@ assert.strictEqual(format(user.formatter, { userId: 1 }), '/users/1')
 assert.strictEqual(format(invoice.formatter, { userId: 1, invoiceId: 2 }), '/users/1/invoice/2')
 ```
 
-# Defining new matches via io-ts types
+# Defining new matches via `io-ts` types
 
 The function `type` allows to define a new `Match` from a [io-ts](https://github.com/gcanti/io-ts) runtime type
 
