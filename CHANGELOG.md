@@ -13,6 +13,10 @@
 **Note**: Gaps between patch versions are faulty/broken releases. **Note**: A feature tagged as Experimental is in a
 high state of flux, you're at risk of it changing without notice.
 
+# 0.3.7
+
+Make `fp-ts-routing` compatible with `io-ts-types#0.4.0+`, closes #30 (@gcanti)
+
 # 0.3.6
 
 - **New Feature**
