@@ -14,7 +14,7 @@ const isObjectEmpty = (o: object): boolean => {
 }
 
 export interface Query {
-  [key: string]: string | Array<string> | undefined
+  [key: string]: string | Array<string> | undefined | null
 }
 
 export class Route {

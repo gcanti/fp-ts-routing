@@ -168,6 +168,25 @@ describe('parsers', () => {
     )
   })
 
+  it('query accept null and undefined ', () => {
+    const Q = t.interface({ a: t.union([t.undefined, t.null, t.string]) })
+    assert.strictEqual(
+      query(Q)
+        .parser.run(Route.parse('/foo/bar/?a=baz'))
+        .exists(([{ a }]) => a === 'baz'),
+      true
+    )
+    assert.strictEqual(
+      query(Q)
+        .parser.run(Route.parse('/foo/bar/?b=1'))
+        .isSome(),
+      true
+    )
+    assert.deepEqual(query(Q).formatter.run(Route.empty, { a: null }), new Route([], { a: null }))
+    assert.deepEqual(query(Q).formatter.run(Route.empty, { a: undefined }), new Route([], { a: undefined }))
+    assert.deepEqual(query(Q).formatter.run(Route.empty, { a: 'baz' }), new Route([], { a: 'baz' }))
+  })
+
   it('succeed', () => {
     assert.deepEqual(succeed({}).parser.run(Route.parse('/')), some([{}, { parts: [], query: {} }]))
     assert.deepEqual(succeed({}).parser.run(Route.parse('/a')), some([{}, { parts: ['a'], query: {} }]))
