@@ -13,6 +13,10 @@
 **Note**: Gaps between patch versions are faulty/broken releases. **Note**: A feature tagged as Experimental is in a
 high state of flux, you're at risk of it changing without notice.
 
+# 0.3.9
+
+Make `fp-ts-routing` compatible with `typescript@3.2.0-rc`, closes #34 (@sledorze)
+
 # 0.3.8
 
 - **New Feature**
@@ -20,7 +24,7 @@ high state of flux, you're at risk of it changing without notice.
 
 # 0.3.7
 
-Make `fp-ts-routing` compatible with `io-ts-types#0.4.0+`, closes #30 (@gcanti)
+Make `fp-ts-routing` compatible with `io-ts-types@0.4.0+`, closes #30 (@gcanti)
 
 # 0.3.6
 
