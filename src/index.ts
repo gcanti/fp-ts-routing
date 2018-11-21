@@ -96,9 +96,9 @@ export class Match<A extends object> {
   imap<B extends object>(f: (a: A) => B, g: (b: B) => A): Match<B> {
     return new Match(this.parser.map(f), this.formatter.contramap(g))
   }
-  then<B extends Pick<B, Exclude<keyof B, keyof A>>>(that: Match<B> & Match<RowLacks<B, keyof A>>): Match<A & B> {
+  then<B extends object>(that: Match<B> & Match<RowLacks<B, keyof A>>): Match<A & B> {
     const p = this.parser.then(that.parser)
-    const f = this.formatter.then(that.formatter)
+    const f = this.formatter.then<B>(that.formatter)
     return new Match(p, f)
   }
 }
