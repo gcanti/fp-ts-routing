@@ -80,6 +80,14 @@ describe('Route', () => {
     assert.strictEqual(new Route(['@a'], {}).toString(false), '/@a')
   })
 
+  it('toString discards undefined parameters', () => {
+    const dummy = lit('x').then(query(t.interface({ a: t.union([t.undefined, t.string]) })))
+    assert.deepEqual(
+      dummy.parser.run(Route.parse(format(dummy.formatter, { a: undefined }))),
+      some([{ a: undefined }, Route.empty])
+    )
+  })
+
   it('parse and toString should be inverse functions', () => {
     const path = '/a%20c?b=b%20c'
     assert.strictEqual(Route.parse(path).toString(), path)

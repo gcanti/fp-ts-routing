@@ -3,6 +3,7 @@ import * as querystring from 'querystring'
 import { Option, some, none, fromNullable, fromEither } from 'fp-ts/lib/Option'
 import { tuple, identity } from 'fp-ts/lib/function'
 import * as array from 'fp-ts/lib/Array'
+import { filterMap } from 'fp-ts/lib/Record'
 import * as t from 'io-ts'
 import { IntegerFromString } from 'io-ts-types/lib/number/IntegerFromString'
 
@@ -32,7 +33,8 @@ export class Route {
     return new Route(parts, route.query)
   }
   toString(encode: boolean = true): string {
-    const qs = querystring.stringify(this.query)
+    const nonNullQuery = filterMap(this.query, fromNullable)
+    const qs = querystring.stringify(nonNullQuery)
     const parts = encode ? this.parts.map(encodeURIComponent) : this.parts
     return '/' + parts.join('/') + (qs ? '?' + qs : '')
   }
