@@ -3,9 +3,10 @@ import * as querystring from 'querystring'
 import { Option, some, none, fromNullable, fromEither } from 'fp-ts/lib/Option'
 import { tuple, identity } from 'fp-ts/lib/function'
 import * as array from 'fp-ts/lib/Array'
-import { filter } from 'fp-ts/lib/Record'
+import * as records from 'fp-ts/lib/Record'
 import * as t from 'io-ts'
 import { IntegerFromString } from 'io-ts-types/lib/number/IntegerFromString'
+import { getProps } from './io-ts'
 
 const isObjectEmpty = (o: object): boolean => {
   for (const _ in o) {
@@ -14,8 +15,9 @@ const isObjectEmpty = (o: object): boolean => {
   return true
 }
 
+export type QueryValues = string | Array<string> | undefined | null
 export interface Query {
-  [key: string]: string | Array<string> | undefined | null
+  [key: string]: QueryValues
 }
 
 export class Route {
@@ -33,7 +35,7 @@ export class Route {
     return new Route(parts, route.query)
   }
   toString(encode: boolean = true): string {
-    const nonNullQuery = filter(this.query, part => part !== undefined)
+    const nonNullQuery = records.filter(this.query, part => part !== undefined && part !== null)
     const qs = querystring.stringify(nonNullQuery)
     const parts = encode ? this.parts.map(encodeURIComponent) : this.parts
     return '/' + parts.join('/') + (qs ? '?' + qs : '')
@@ -146,8 +148,27 @@ export const lit = (literal: string): Match<{}> =>
     new Formatter((r, n) => new Route(r.parts.concat(literal), r.query))
   )
 
-export const query = <A extends object>(type: t.Type<A, Query>): Match<A> =>
-  new Match(
-    new Parser(r => fromEither(type.decode(r.query)).map(query => tuple(query, new Route(r.parts, {})))),
+const fallBackWithNulls = (nullObjKeys: string[], q: Query): Query => {
+  const res: Query = Object.assign({}, q)
+  for (const k of nullObjKeys) {
+    if (!res.hasOwnProperty(k)) {
+      res[k] = null
+    }
+  }
+  return res
+}
+
+export const query = <A extends object>(type: t.Type<A, Query> & t.HasProps): Match<A> => {
+  const props = getProps(type)
+
+  const nullObjKeys = array.catOptions(records.collect(props, (k, v) => (v.decode(null).isRight() ? some(k) : none)))
+
+  return new Match(
+    new Parser(r =>
+      fromEither(type.decode(fallBackWithNulls(nullObjKeys, r.query))).map(query =>
+        tuple(query, new Route(r.parts, {}))
+      )
+    ),
     new Formatter((r, query) => new Route(r.parts, type.encode(query)))
   )
+}
