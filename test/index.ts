@@ -81,10 +81,11 @@ describe('Route', () => {
   })
 
   it('toString discards undefined parameters', () => {
-    const dummy = lit('x').then(query(t.interface({ a: t.union([t.undefined, t.string]) })))
+    const stringOrUndefined = t.union([t.undefined, t.string])
+    const dummy = lit('x').then(query(t.interface({ a: stringOrUndefined, b: stringOrUndefined })))
     assert.deepEqual(
-      dummy.parser.run(Route.parse(format(dummy.formatter, { a: undefined }))),
-      some([{ a: undefined }, Route.empty])
+      dummy.parser.run(Route.parse(format(dummy.formatter, { a: undefined, b: 'evidence' }))),
+      some([{ b: 'evidence' }, Route.empty])
     )
   })
 
