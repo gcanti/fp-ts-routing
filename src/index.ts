@@ -148,7 +148,7 @@ export const lit = (literal: string): Match<{}> =>
     new Formatter((r, n) => new Route(r.parts.concat(literal), r.query))
   )
 
-const fallBackWithNulls = (nullObjKeys: string[], q: Query): Query => {
+const fallBackWithNulls = (nullObjKeys: string[]) => (q: Query): Query => {
   const res: Query = Object.assign({}, q)
   for (const k of nullObjKeys) {
     if (!res.hasOwnProperty(k)) {
@@ -162,13 +162,10 @@ export const query = <A extends object>(type: t.Type<A, Query> & t.HasProps): Ma
   const props = getProps(type)
 
   const nullObjKeys = array.catOptions(records.collect(props, (k, v) => (v.decode(null).isRight() ? some(k) : none)))
+  const fallbackNulls = nullObjKeys.length === 0 ? identity : fallBackWithNulls(nullObjKeys)
 
   return new Match(
-    new Parser(r =>
-      fromEither(type.decode(fallBackWithNulls(nullObjKeys, r.query))).map(query =>
-        tuple(query, new Route(r.parts, {}))
-      )
-    ),
+    new Parser(r => fromEither(type.decode(fallbackNulls(r.query))).map(query => tuple(query, new Route(r.parts, {})))),
     new Formatter((r, query) => new Route(r.parts, type.encode(query)))
   )
 }
