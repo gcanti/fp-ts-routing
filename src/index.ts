@@ -34,8 +34,8 @@ export class Route {
     return new Route(parts, route.query)
   }
   toString(encode: boolean = true): string {
-    const nonNullQuery = records.filter(this.query, part => part !== undefined)
-    const qs = querystring.stringify(nonNullQuery)
+    const nonUndefinedQuery = records.filter(this.query, part => part !== undefined)
+    const qs = querystring.stringify(nonUndefinedQuery)
     const parts = encode ? this.parts.map(encodeURIComponent) : this.parts
     return '/' + parts.join('/') + (qs ? '?' + qs : '')
   }
