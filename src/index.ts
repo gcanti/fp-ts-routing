@@ -3,6 +3,7 @@ import * as querystring from 'querystring'
 import { Option, some, none, fromNullable, fromEither } from 'fp-ts/lib/Option'
 import { tuple, identity } from 'fp-ts/lib/function'
 import * as array from 'fp-ts/lib/Array'
+import * as records from 'fp-ts/lib/Record'
 import * as t from 'io-ts'
 import { IntegerFromString } from 'io-ts-types/lib/number/IntegerFromString'
 
@@ -13,8 +14,9 @@ const isObjectEmpty = (o: object): boolean => {
   return true
 }
 
+export type QueryValues = string | Array<string> | undefined
 export interface Query {
-  [key: string]: string | Array<string> | undefined | null
+  [key: string]: QueryValues
 }
 
 export class Route {
@@ -32,7 +34,8 @@ export class Route {
     return new Route(parts, route.query)
   }
   toString(encode: boolean = true): string {
-    const qs = querystring.stringify(this.query)
+    const nonUndefinedQuery = records.filter(this.query, part => part !== undefined)
+    const qs = querystring.stringify(nonUndefinedQuery)
     const parts = encode ? this.parts.map(encodeURIComponent) : this.parts
     return '/' + parts.join('/') + (qs ? '?' + qs : '')
   }
