@@ -6,7 +6,6 @@ import * as array from 'fp-ts/lib/Array'
 import * as records from 'fp-ts/lib/Record'
 import * as t from 'io-ts'
 import { IntegerFromString } from 'io-ts-types/lib/number/IntegerFromString'
-import { getProps } from './io-ts'
 
 const isObjectEmpty = (o: object): boolean => {
   for (const _ in o) {
@@ -15,7 +14,7 @@ const isObjectEmpty = (o: object): boolean => {
   return true
 }
 
-export type QueryValues = string | Array<string> | undefined | null
+export type QueryValues = string | Array<string> | undefined
 export interface Query {
   [key: string]: QueryValues
 }
@@ -35,7 +34,7 @@ export class Route {
     return new Route(parts, route.query)
   }
   toString(encode: boolean = true): string {
-    const nonNullQuery = records.filter(this.query, part => part !== undefined && part !== null)
+    const nonNullQuery = records.filter(this.query, part => part !== undefined)
     const qs = querystring.stringify(nonNullQuery)
     const parts = encode ? this.parts.map(encodeURIComponent) : this.parts
     return '/' + parts.join('/') + (qs ? '?' + qs : '')
@@ -148,24 +147,9 @@ export const lit = (literal: string): Match<{}> =>
     new Formatter((r, n) => new Route(r.parts.concat(literal), r.query))
   )
 
-const fallBackWithNulls = (nullObjKeys: string[]) => (q: Query): Query => {
-  const res: Query = Object.assign({}, q)
-  for (const k of nullObjKeys) {
-    if (!res.hasOwnProperty(k)) {
-      res[k] = null
-    }
-  }
-  return res
-}
-
 export const query = <A extends object>(type: t.Type<A, Query> & t.HasProps): Match<A> => {
-  const props = getProps(type)
-
-  const nullObjKeys = array.catOptions(records.collect(props, (k, v) => (v.decode(null).isRight() ? some(k) : none)))
-  const fallbackNulls = nullObjKeys.length === 0 ? identity : fallBackWithNulls(nullObjKeys)
-
   return new Match(
-    new Parser(r => fromEither(type.decode(fallbackNulls(r.query))).map(query => tuple(query, new Route(r.parts, {})))),
+    new Parser(r => fromEither(type.decode(r.query)).map(query => tuple(query, new Route(r.parts, {})))),
     new Formatter((r, query) => new Route(r.parts, type.encode(query)))
   )
 }

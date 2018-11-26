@@ -89,15 +89,6 @@ describe('Route', () => {
     )
   })
 
-  it('toString discards null parameters', () => {
-    const stringOrNull = t.union([t.null, t.string])
-    const dummy = lit('x').then(query(t.interface({ a: stringOrNull, b: stringOrNull })))
-    assert.deepEqual(
-      dummy.parser.run(Route.parse(format(dummy.formatter, { a: null, b: 'evidence' }))),
-      some([{ a: null, b: 'evidence' }, Route.empty])
-    )
-  })
-
   it('parse and toString should be inverse functions', () => {
     const path = '/a%20c?b=b%20c'
     assert.strictEqual(Route.parse(path).toString(), path)
@@ -186,8 +177,8 @@ describe('parsers', () => {
     )
   })
 
-  it('query accept null and undefined ', () => {
-    const Q = t.interface({ a: t.union([t.undefined, t.null, t.string]) })
+  it('query accept undefined ', () => {
+    const Q = t.interface({ a: t.union([t.undefined, t.string]) })
     assert.strictEqual(
       query(Q)
         .parser.run(Route.parse('/foo/bar/?a=baz'))
@@ -200,7 +191,6 @@ describe('parsers', () => {
         .isSome(),
       true
     )
-    assert.deepEqual(query(Q).formatter.run(Route.empty, { a: null }), new Route([], { a: null }))
     assert.deepEqual(query(Q).formatter.run(Route.empty, { a: undefined }), new Route([], { a: undefined }))
     assert.deepEqual(query(Q).formatter.run(Route.empty, { a: 'baz' }), new Route([], { a: 'baz' }))
   })
