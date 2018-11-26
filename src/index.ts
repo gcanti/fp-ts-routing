@@ -147,9 +147,8 @@ export const lit = (literal: string): Match<{}> =>
     new Formatter((r, n) => new Route(r.parts.concat(literal), r.query))
   )
 
-export const query = <A extends object>(type: t.Type<A, Query> & t.HasProps): Match<A> => {
-  return new Match(
+export const query = <A extends object>(type: t.Type<A, Query>): Match<A> =>
+  new Match(
     new Parser(r => fromEither(type.decode(r.query)).map(query => tuple(query, new Route(r.parts, {})))),
     new Formatter((r, query) => new Route(r.parts, type.encode(query)))
   )
-}
