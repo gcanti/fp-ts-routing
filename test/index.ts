@@ -85,7 +85,7 @@ describe('Route', () => {
     const dummy = lit('x').then(query(t.interface({ a: stringOrUndefined, b: stringOrUndefined })))
     assert.deepEqual(
       dummy.parser.run(Route.parse(format(dummy.formatter, { a: undefined, b: 'evidence' }))),
-      some([{ b: 'evidence' }, Route.empty])
+      some([{ a: undefined, b: 'evidence' }, Route.empty])
     )
   })
 
