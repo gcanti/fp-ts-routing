@@ -1,20 +1,14 @@
-import * as url from 'url'
-import * as querystring from 'querystring'
-import { Option, some, none, fromNullable, fromEither } from 'fp-ts/lib/Option'
-import { tuple, identity } from 'fp-ts/lib/function'
-import * as array from 'fp-ts/lib/Array'
-import * as records from 'fp-ts/lib/Record'
-import * as t from 'io-ts'
+import { fold } from 'fp-ts/lib/Array'
+import { identity, tuple } from 'fp-ts/lib/function'
+import { fromEither, fromNullable, none, Option, some } from 'fp-ts/lib/Option'
+import { filter, isEmpty } from 'fp-ts/lib/Record'
+import { string, Type } from 'io-ts'
 import { IntegerFromString } from 'io-ts-types/lib/number/IntegerFromString'
-
-const isObjectEmpty = (o: object): boolean => {
-  for (const _ in o) {
-    return false
-  }
-  return true
-}
+import { stringify } from 'querystring'
+import { parse as parseUrl } from 'url'
 
 export type QueryValues = string | Array<string> | undefined
+
 export interface Query {
   [key: string]: QueryValues
 }
@@ -22,9 +16,9 @@ export interface Query {
 export class Route {
   static empty = new Route([], {})
   constructor(readonly parts: Array<string>, readonly query: Query) {}
-  static isEmpty = (r: Route) => r.parts.length === 0 && isObjectEmpty(r.query)
+  static isEmpty = (r: Route) => r.parts.length === 0 && isEmpty(r.query)
   static parse = (s: string, decode: boolean = true): Route => {
-    const route = url.parse(s, true)
+    const route = parseUrl(s, true)
     const parts = fromNullable(route.pathname)
       .map(s => {
         const r = s.split('/').filter(Boolean)
@@ -34,8 +28,8 @@ export class Route {
     return new Route(parts, route.query)
   }
   toString(encode: boolean = true): string {
-    const nonUndefinedQuery = records.filter(this.query, part => part !== undefined)
-    const qs = querystring.stringify(nonUndefinedQuery)
+    const nonUndefinedQuery = filter(this.query, value => value !== undefined)
+    const qs = stringify(nonUndefinedQuery)
     const parts = encode ? this.parts.map(encodeURIComponent) : this.parts
     return '/' + parts.join('/') + (qs ? '?' + qs : '')
   }
@@ -119,10 +113,10 @@ export const end: Match<{}> = new Match(
 )
 
 /** `type` matches any io-ts type path component */
-export const type = <K extends string, A>(k: K, type: t.Type<A, string>): Match<{ [_ in K]: A }> =>
+export const type = <K extends string, A>(k: K, type: Type<A, string>): Match<{ [_ in K]: A }> =>
   new Match(
     new Parser(r =>
-      array.fold(r.parts, none, (head, tail) =>
+      fold(r.parts, none, (head, tail) =>
         fromEither(type.decode(head)).map(a => tuple(singleton(k, a), new Route(tail, r.query)))
       )
     ),
@@ -130,7 +124,7 @@ export const type = <K extends string, A>(k: K, type: t.Type<A, string>): Match<
   )
 
 /** `str` matches any string path component */
-export const str = <K extends string>(k: K): Match<{ [_ in K]: string }> => type(k, t.string)
+export const str = <K extends string>(k: K): Match<{ [_ in K]: string }> => type(k, string)
 
 /** `int` matches any integer path component */
 export const int = <K extends string>(k: K): Match<{ [_ in K]: number }> => type(k, IntegerFromString)
@@ -142,12 +136,12 @@ export const int = <K extends string>(k: K): Match<{ [_ in K]: number }> => type
 export const lit = (literal: string): Match<{}> =>
   new Match(
     new Parser(r =>
-      array.fold(r.parts, none, (head, tail) => (head === literal ? some(tuple({}, new Route(tail, r.query))) : none))
+      fold(r.parts, none, (head, tail) => (head === literal ? some(tuple({}, new Route(tail, r.query))) : none))
     ),
     new Formatter((r, n) => new Route(r.parts.concat(literal), r.query))
   )
 
-export const query = <A extends object>(type: t.Type<A, Query>): Match<A> =>
+export const query = <A extends object>(type: Type<A, Query>): Match<A> =>
   new Match(
     new Parser(r => fromEither(type.decode(r.query)).map(query => tuple(query, new Route(r.parts, {})))),
     new Formatter((r, query) => new Route(r.parts, type.encode(query)))

@@ -13,6 +13,12 @@
 **Note**: Gaps between patch versions are faulty/broken releases. **Note**: A feature tagged as Experimental is in a
 high state of flux, you're at risk of it changing without notice.
 
+# 0.4.0
+
+- **Breaking Change**
+  - remove `null` from `Query` (@Eldow)
+  - discard `undefined` parameters from route params (@Eldow)
+
 # 0.3.9
 
 Make `fp-ts-routing` compatible with `typescript@3.2.0-rc`, closes #34 (@sledorze)
