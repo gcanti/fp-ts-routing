@@ -1,59 +1,62 @@
 # TypeScript compatibility
 
-The stable version is tested against TypeScript 3.1.6
+The stable version is tested against TypeScript 3.2.2
 
 # Usage
 
 ```ts
-import { lit, int, end, zero, Route, parse, format } from 'fp-ts-routing'
-
 //
 // locations
 //
 
-class Home {
-  static value = new Home()
-  readonly _tag: 'Home' = 'Home'
-  private constructor() {}
+interface Home {
+  readonly _tag: 'Home'
 }
 
-class User {
-  readonly _tag: 'User' = 'User'
-  constructor(readonly id: number) {}
+interface User {
+  readonly _tag: 'User'
+  readonly id: number
 }
 
-class Invoice {
-  readonly _tag: 'Invoice' = 'Invoice'
-  constructor(readonly userId: number, readonly invoiceId: number) {}
+interface Invoice {
+  readonly _tag: 'Invoice'
+  readonly userId: number
+  readonly invoiceId: number
 }
 
-class NotFound {
-  static value = new NotFound()
-  readonly _tag: 'NotFound' = 'NotFound'
-  private constructor() {}
+interface NotFound {
+  readonly _tag: 'NotFound'
 }
 
 type Location = Home | User | Invoice | NotFound
 
+const home: Location = { _tag: 'Home' }
+
+const user = (id: number): Location => ({ _tag: 'User', id })
+
+const invoice = (userId: number, invoiceId: number): Location => ({ _tag: 'Invoice', userId, invoiceId })
+
+const notFound: Location = { _tag: 'NotFound' }
+
 // matches
 const defaults = end
-const home = lit('home').then(end)
-const userId = lit('users').then(int('userId'))
-const user = userId.then(end)
-const invoice = userId
+const homeMatch = lit('home').then(end)
+const userIdMatch = lit('users').then(int('userId'))
+const userMatch = userIdMatch.then(end)
+const invoiceMatch = userIdMatch
   .then(lit('invoice'))
   .then(int('invoiceId'))
   .then(end)
 
 // router
 const router = zero<Location>()
-  .alt(defaults.parser.map(() => Home.value))
-  .alt(home.parser.map(() => Home.value))
-  .alt(user.parser.map(({ userId }) => new User(userId)))
-  .alt(invoice.parser.map(({ userId, invoiceId }) => new Invoice(userId, invoiceId)))
+  .alt(defaults.parser.map(() => home))
+  .alt(homeMatch.parser.map(() => home))
+  .alt(userMatch.parser.map(({ userId }) => user(userId)))
+  .alt(invoiceMatch.parser.map(({ userId, invoiceId }) => invoice(userId, invoiceId)))
 
 // helper
-const parseLocation = (s: string): Location => parse(router, Route.parse(s), NotFound.value)
+const parseLocation = (s: string): Location => parse(router, Route.parse(s), notFound)
 
 import * as assert from 'assert'
 
@@ -61,18 +64,18 @@ import * as assert from 'assert'
 // parsers
 //
 
-assert.strictEqual(parseLocation('/'), Home.value)
-assert.strictEqual(parseLocation('/home'), Home.value)
-assert.deepEqual(parseLocation('/users/1'), new User(1))
-assert.deepEqual(parseLocation('/users/1/invoice/2'), new Invoice(1, 2))
-assert.strictEqual(parseLocation('/foo'), NotFound.value)
+assert.strictEqual(parseLocation('/'), home)
+assert.strictEqual(parseLocation('/home'), home)
+assert.deepEqual(parseLocation('/users/1'), user(1))
+assert.deepEqual(parseLocation('/users/1/invoice/2'), invoice(1, 2))
+assert.strictEqual(parseLocation('/foo'), notFound)
 
 //
 // formatters
 //
 
-assert.strictEqual(format(user.formatter, { userId: 1 }), '/users/1')
-assert.strictEqual(format(invoice.formatter, { userId: 1, invoiceId: 2 }), '/users/1/invoice/2')
+assert.strictEqual(format(userMatch.formatter, { userId: 1 }), '/users/1')
+assert.strictEqual(format(invoiceMatch.formatter, { userId: 1, invoiceId: 2 }), '/users/1/invoice/2')
 ```
 
 # Defining new matches via `io-ts` types
