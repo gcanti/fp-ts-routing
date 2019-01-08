@@ -1,6 +1,6 @@
 {
   "name": "fp-ts-routing",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "A type-safe routing library for TypeScript",
   "files": [
     "lib"
@@ -9,14 +9,14 @@
   "typings": "lib/index.d.ts",
   "scripts": {
     "lint": "tslint -p tsconfig.json src/**/*.ts test/**/*.ts",
-    "typings-checker": "typings-checker --allow-expect-error --project typings-checker/tsconfig.json typings-checker/index.ts",
     "jest": "jest --ci",
     "jest-coverage": "jest --ci --coverage",
     "prettier": "prettier --no-semi --single-quote --print-width 120 --parser typescript --list-different \"{src,test}/**/*.ts\"",
     "fix-prettier": "prettier --no-semi --single-quote --print-width 120 --parser typescript --write \"{src,test}/**/*.ts\"",
-    "test": "npm run prettier && npm run lint && npm run typings-checker && npm run jest",
+    "test": "npm run prettier && npm run lint && npm run dtslint && npm run jest",
     "clean": "rm -rf lib/*",
-    "build": "npm run clean && tsc"
+    "build": "npm run clean && tsc",
+    "dtslint": "dtslint dtslint"
   },
   "repository": {
     "type": "git",
@@ -36,14 +36,14 @@
   "devDependencies": {
     "@types/jest": "^22.2.2",
     "@types/node": "^10.3.3",
+    "dtslint": "^0.4.2",
     "jest": "^22.4.3",
-    "prettier": "^1.13.5",
+    "prettier": "^1.15.3",
     "ts-jest": "^22.4.2",
     "ts-node": "3.3.0",
     "tslint": "^5.9.1",
     "tslint-config-standard": "^7.0.0",
-    "typescript": "^3.1.6",
-    "typings-checker": "^2.0.0"
+    "typescript": "^3.2.2"
   },
   "tags": [
     "typescript",
