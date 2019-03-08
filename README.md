@@ -85,3 +85,7 @@ The function `type` allows to define a new `Match` from a [io-ts](https://github
 ```ts
 type<K extends string, A>(k: K, type: t.Type<A>): Match<{ [_ in K]: A }>
 ```
+
+# Documentation
+
+- [API Reference](https://gcanti.github.io/fp-ts-routing)
