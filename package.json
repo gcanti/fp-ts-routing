@@ -1,11 +1,13 @@
 {
   "name": "fp-ts-routing",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "A type-safe routing library for TypeScript",
   "files": [
-    "lib"
+    "lib",
+    "es6"
   ],
   "main": "lib/index.js",
+  "module": "es6/index.js",
   "typings": "lib/index.d.ts",
   "scripts": {
     "lint": "tslint -p tsconfig.json src/**/*.ts test/**/*.ts",
@@ -15,7 +17,8 @@
     "fix-prettier": "prettier --no-semi --single-quote --print-width 120 --parser typescript --write \"{src,test}/**/*.ts\"",
     "test": "npm run prettier && npm run lint && npm run dtslint && npm run jest && npm run docs",
     "clean": "rm -rf lib/*",
-    "build": "npm run clean && tsc",
+    "build": "npm run clean && tsc && tsc -p tsconfig.es6.json",
+    "prepublish": "npm run build",
     "dtslint": "dtslint dtslint",
     "docs": "docs-ts"
   },
@@ -29,16 +32,17 @@
     "url": "https://github.com/gcanti/fp-ts-routing/issues"
   },
   "homepage": "https://github.com/gcanti/fp-ts-routing",
-  "dependencies": {
-    "fp-ts": "^1.10.0",
-    "io-ts": "^1.4.2",
-    "io-ts-types": "^0.3.6 || ^0.4.0"
+  "peerDependencies": {
+    "fp-ts": "^1.19.0 || ^2.0.0-rc.7",
+    "io-ts": "^1.10.0"
   },
   "devDependencies": {
     "@types/jest": "^22.2.2",
     "@types/node": "^10.3.3",
     "docs-ts": "0.0.1",
-    "dtslint": "^0.4.2",
+    "dtslint": "github:gcanti/dtslint",
+    "fp-ts": "^1.19.0",
+    "io-ts": "^1.10.0",
     "jest": "^22.4.3",
     "prettier": "^1.15.3",
     "ts-jest": "^22.4.2",
@@ -83,5 +87,6 @@
       }
     },
     "testEnvironment": "node"
-  }
+  },
+  "dependencies": {}
 }
