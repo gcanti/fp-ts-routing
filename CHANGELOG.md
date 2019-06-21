@@ -13,6 +13,13 @@
 **Note**: Gaps between patch versions are faulty/broken releases. **Note**: A feature tagged as Experimental is in a
 high state of flux, you're at risk of it changing without notice.
 
+# 0.4.2
+
+**Note**. `fp-ts-routing` depends on [`fp-ts`](https://github.com/gcanti/fp-ts) and [`io-ts`](https://github.com/gcanti/io-ts), starting from `0.4.2` you must install both `fp-ts` and `io-ts` manually (`fp-ts` and `io-ts` are now listed in `peerDependency`)
+
+- **New Feature**
+  - make `fp-ts-routing` compatible with both `fp-ts@1.x` and `fp-ts@2.x` (@gcanti)
+
 # 0.4.1
 
 - **Polish**

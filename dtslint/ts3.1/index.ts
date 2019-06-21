@@ -1,4 +1,4 @@
-import { str, query } from '../src'
+import { str, query } from '../../src'
 import * as t from 'io-ts'
 
 // shouldn't type-check when using a duplicate key

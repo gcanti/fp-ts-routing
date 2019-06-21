@@ -48,6 +48,8 @@ export interface Query {
 }
 ```
 
+Added in v0.4.0
+
 # QueryValues (type alias)
 
 **Signature**
@@ -55,6 +57,8 @@ export interface Query {
 ```ts
 export type QueryValues = string | Array<string> | undefined
 ```
+
+Added in v0.4.0
 
 # RowLacks (type alias)
 
@@ -67,6 +71,8 @@ does not contain specific keys `K`
 export type RowLacks<O extends object, K extends string | number | symbol> = O & Record<Extract<keyof O, K>, never>
 ```
 
+Added in v0.4.0
+
 # Formatter (class)
 
 **Signature**
@@ -77,6 +83,8 @@ export class Formatter<A> {
   ...
 }
 ```
+
+Added in v0.4.0
 
 ## contramap (method)
 
@@ -105,6 +113,8 @@ export class Match<A> {
 }
 ```
 
+Added in v0.4.0
+
 ## imap (method)
 
 **Signature**
@@ -131,6 +141,8 @@ export class Parser<A> {
   ...
 }
 ```
+
+Added in v0.4.0
 
 ## map (method)
 
@@ -185,6 +197,8 @@ export class Route {
 }
 ```
 
+Added in v0.4.0
+
 ## toString (method)
 
 **Signature**
@@ -203,13 +217,17 @@ toString(encode: boolean = true): string { ... }
 export const end: Match<{}> = ...
 ```
 
+Added in v0.4.0
+
 # format (function)
 
 **Signature**
 
 ```ts
-export const format = <A extends object>(formatter: Formatter<A>, a: A, encode: boolean = true): string => ...
+export function format<A extends object>(formatter: Formatter<A>, a: A, encode: boolean = true): string { ... }
 ```
+
+Added in v0.4.0
 
 # int (function)
 
@@ -218,8 +236,10 @@ export const format = <A extends object>(formatter: Formatter<A>, a: A, encode: 
 **Signature**
 
 ```ts
-export const int = <K extends string>(k: K): Match<{ [_ in K]: number }> => ...
+export function int<K extends string>(k: K): Match<{ [_ in K]: number }> { ... }
 ```
+
+Added in v0.4.0
 
 # lit (function)
 
@@ -229,35 +249,30 @@ For example, `lit('x')` matches `/x`
 **Signature**
 
 ```ts
-export const lit = (literal: string): Match<{}> =>
-  new Match(
-    new Parser(r =>
-      fold(r.parts, none, (head, tail) => (head === literal ? some(tuple({}, new Route(tail, r.query))) : none))
-    ),
-    new Formatter((r, n) => ...
+export function lit(literal: string): Match<{}> { ... }
 ```
+
+Added in v0.4.0
 
 # parse (function)
 
 **Signature**
 
 ```ts
-export const parse = <A extends object>(parser: Parser<A>, r: Route, a: A): A =>
-  parser
-    .run(r)
-    .map(([a]) => ...
+export function parse<A extends object>(parser: Parser<A>, r: Route, a: A): A { ... }
 ```
+
+Added in v0.4.0
 
 # query (function)
 
 **Signature**
 
 ```ts
-export const query = <A extends object, T>(type: Type<A, Record<keyof T, QueryValues>>): Match<A> =>
-  new Match(
-    new Parser(r => fromEither(type.decode(r.query)).map(query => tuple(query, new Route(r.parts, {})))),
-    new Formatter((r, query) => ...
+export function query<A extends object, T>(type: Type<A, Record<keyof T, QueryValues>>): Match<A> { ... }
 ```
+
+Added in v0.4.0
 
 # str (function)
 
@@ -266,8 +281,10 @@ export const query = <A extends object, T>(type: Type<A, Record<keyof T, QueryVa
 **Signature**
 
 ```ts
-export const str = <K extends string>(k: K): Match<{ [_ in K]: string }> => ...
+export function str<K extends string>(k: K): Match<{ [_ in K]: string }> { ... }
 ```
+
+Added in v0.4.0
 
 # succeed (function)
 
@@ -276,9 +293,10 @@ export const str = <K extends string>(k: K): Match<{ [_ in K]: string }> => ...
 **Signature**
 
 ```ts
-export const succeed = <A extends object>(a: A): Match<A> =>
-  new Match(new Parser(r => ...
+export function succeed<A extends object>(a: A): Match<A> { ... }
 ```
+
+Added in v0.4.0
 
 # type (function)
 
@@ -287,20 +305,17 @@ export const succeed = <A extends object>(a: A): Match<A> =>
 **Signature**
 
 ```ts
-export const type = <K extends string, A>(k: K, type: Type<A, string>): Match<{ [_ in K]: A }> =>
-  new Match(
-    new Parser(r =>
-      fold(r.parts, none, (head, tail) =>
-        fromEither(type.decode(head)).map(a => tuple(singleton(k, a), new Route(tail, r.query)))
-      )
-    ),
-    new Formatter((r, o) => ...
+export function type<K extends string, A>(k: K, type: Type<A, string>): Match<{ [_ in K]: A }> { ... }
 ```
+
+Added in v0.4.0
 
 # zero (function)
 
 **Signature**
 
 ```ts
-export const zero = <A extends object>(): Parser<A> => new Parser(() => ...
+export function zero<A extends object>(): Parser<A> { ... }
 ```
+
+Added in v0.4.0

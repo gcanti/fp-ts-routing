@@ -1,12 +1,54 @@
 import * as assert from 'assert'
 import * as t from 'io-ts'
-import { DateFromISOString } from 'io-ts-types/lib/Date/DateFromISOString'
-import { IntegerFromString } from 'io-ts-types/lib/number/IntegerFromString'
-import { some, none } from 'fp-ts/lib/Option'
-import { end, format, int, lit, parse, query, Route, str, type, zero, Formatter, succeed } from '../src'
+import { some, none, exists, isSome } from 'fp-ts/lib/Option'
+import {
+  end,
+  format,
+  int,
+  lit,
+  parse,
+  query,
+  Route,
+  str,
+  type,
+  zero,
+  Formatter,
+  succeed,
+  IntegerFromString
+} from '../src'
+import { isLeft } from 'fp-ts/lib/Either'
+import { pipe } from 'fp-ts/lib/pipeable'
+
+export const DateFromISOString = new t.Type(
+  'DateFromISOString',
+  (u): u is Date => u instanceof Date,
+  (u, c) => {
+    const validation = t.string.validate(u, c)
+    if (isLeft(validation)) {
+      return validation as any
+    } else {
+      const s = validation.value
+      const d = new Date(s)
+      return isNaN(d.getTime()) ? t.failure(s, c) : t.success(d)
+    }
+  },
+  a => a.toISOString()
+)
+
+describe('IntegerFromString', () => {
+  it('is', () => {
+    assert.strictEqual(IntegerFromString.is('a'), false)
+    assert.strictEqual(IntegerFromString.is(1.2), false)
+    assert.strictEqual(IntegerFromString.is(1), true)
+  })
+})
 
 describe('Route', () => {
   it('parse', () => {
+    assert.deepEqual(Route.parse(''), {
+      parts: [],
+      query: {}
+    })
     assert.deepEqual(Route.parse('/'), {
       parts: [],
       query: {}
@@ -140,22 +182,25 @@ describe('parsers', () => {
     assert.deepEqual(match.parser.run(Route.parse('/search/a')), some([{ topic: 'a' }, { parts: [], query: {} }]))
     assert.deepEqual(match.parser.run(Route.parse('/search/b')), some([{ topic: 'b' }, { parts: [], query: {} }]))
     assert.deepEqual(match.parser.run(Route.parse('/search/c')), some([{ topic: 'c' }, { parts: [], query: {} }]))
+    assert.deepEqual(match.parser.run(Route.parse('/search/')), none)
   })
 
   it('str', () => {
     assert.strictEqual(
-      str('id')
-        .parser.run(Route.parse('/astring'))
-        .exists(([{ id }]) => id === 'astring'),
+      pipe(
+        str('id').parser.run(Route.parse('/astring')),
+        exists(([{ id }]) => id === 'astring')
+      ),
       true
     )
   })
 
   it('int', () => {
     assert.strictEqual(
-      int('id')
-        .parser.run(Route.parse('/1'))
-        .exists(([{ id }]) => id === 1),
+      pipe(
+        int('id').parser.run(Route.parse('/1')),
+        exists(([{ id }]) => id === 1)
+      ),
       true
     )
     assert.deepEqual(int('id').parser.run(Route.parse('/1a')), none)
@@ -163,9 +208,10 @@ describe('parsers', () => {
 
   it('query', () => {
     assert.strictEqual(
-      query(t.interface({ a: t.string, b: IntegerFromString }))
-        .parser.run(Route.parse('/foo/bar/?a=baz&b=1'))
-        .exists(([{ a, b }]) => a === 'baz' && b === 1),
+      pipe(
+        query(t.interface({ a: t.string, b: IntegerFromString })).parser.run(Route.parse('/foo/bar/?a=baz&b=1')),
+        exists(([{ a, b }]) => a === 'baz' && b === 1)
+      ),
       true
     )
     const date = '2018-01-18T14:51:47.912Z'
@@ -180,17 +226,13 @@ describe('parsers', () => {
   it('query accept undefined ', () => {
     const Q = t.interface({ a: t.union([t.undefined, t.string]) })
     assert.strictEqual(
-      query(Q)
-        .parser.run(Route.parse('/foo/bar/?a=baz'))
-        .exists(([{ a }]) => a === 'baz'),
+      pipe(
+        query(Q).parser.run(Route.parse('/foo/bar/?a=baz')),
+        exists(([{ a }]) => a === 'baz')
+      ),
       true
     )
-    assert.strictEqual(
-      query(Q)
-        .parser.run(Route.parse('/foo/bar/?b=1'))
-        .isSome(),
-      true
-    )
+    assert.strictEqual(isSome(query(Q).parser.run(Route.parse('/foo/bar/?b=1'))), true)
     assert.deepEqual(query(Q).formatter.run(Route.empty, { a: undefined }), new Route([], { a: undefined }))
     assert.deepEqual(query(Q).formatter.run(Route.empty, { a: 'baz' }), new Route([], { a: 'baz' }))
   })
@@ -213,6 +255,7 @@ describe('parsers', () => {
   it('lit', () => {
     const match = lit('subview')
     assert.deepEqual(match.parser.run(Route.parse('/subview/')), some([{}, { parts: [], query: {} }]))
+    assert.deepEqual(match.parser.run(Route.parse('/')), none)
   })
 })
 
