@@ -6,8 +6,6 @@ To install the stable version:
 npm i fp-ts-routing
 ```
 
-**Note**. `fp-ts-routing` depends on [`fp-ts`](https://github.com/gcanti/fp-ts) and [`io-ts`](https://github.com/gcanti/io-ts), starting from `0.4.2` you must install both `fp-ts` and `io-ts` manually (`fp-ts` and `io-ts` are now listed in `peerDependency`)
-
 # TypeScript compatibility
 
 The stable version is tested against TypeScript 3.2.2
