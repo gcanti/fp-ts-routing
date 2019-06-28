@@ -18,12 +18,15 @@ parent: Modules
   - [imap (method)](#imap-method)
   - [then (method)](#then-method-1)
 - [Parser (class)](#parser-class)
+  - [of (static method)](#of-static-method)
   - [map (method)](#map-method)
   - [ap (method)](#ap-method)
   - [chain (method)](#chain-method)
   - [alt (method)](#alt-method)
   - [then (method)](#then-method-2)
 - [Route (class)](#route-class)
+  - [isEmpty (static method)](#isempty-static-method)
+  - [parse (static method)](#parse-static-method)
   - [toString (method)](#tostring-method)
 - [end (constant)](#end-constant)
 - [format (function)](#format-function)
@@ -94,6 +97,8 @@ Added in v0.4.0
 contramap<B extends object>(f: (b: B) => A): Formatter<B> { ... }
 ```
 
+Added in v0.4.0
+
 ## then (method)
 
 **Signature**
@@ -101,6 +106,8 @@ contramap<B extends object>(f: (b: B) => A): Formatter<B> { ... }
 ```ts
 then<B extends object>(that: Formatter<B> & Formatter<RowLacks<B, keyof A>>): Formatter<A & B> { ... }
 ```
+
+Added in v0.4.0
 
 # Match (class)
 
@@ -123,6 +130,8 @@ Added in v0.4.0
 imap<B extends object>(f: (a: A) => B, g: (b: B) => A): Match<B> { ... }
 ```
 
+Added in v0.4.0
+
 ## then (method)
 
 **Signature**
@@ -130,6 +139,8 @@ imap<B extends object>(f: (a: A) => B, g: (b: B) => A): Match<B> { ... }
 ```ts
 then<B extends object>(that: Match<B> & Match<RowLacks<B, keyof A>>): Match<A & B> { ... }
 ```
+
+Added in v0.4.0
 
 # Parser (class)
 
@@ -144,6 +155,16 @@ export class Parser<A> {
 
 Added in v0.4.0
 
+## of (static method)
+
+**Signature**
+
+```ts
+static of<A extends object>(a: A): Parser<A> { ... }
+```
+
+Added in v0.4.0
+
 ## map (method)
 
 **Signature**
@@ -151,6 +172,8 @@ Added in v0.4.0
 ```ts
 map<B extends object>(f: (a: A) => B): Parser<B> { ... }
 ```
+
+Added in v0.4.0
 
 ## ap (method)
 
@@ -160,6 +183,8 @@ map<B extends object>(f: (a: A) => B): Parser<B> { ... }
 ap<B extends object>(fab: Parser<(a: A) => B>): Parser<B> { ... }
 ```
 
+Added in v0.4.0
+
 ## chain (method)
 
 **Signature**
@@ -168,6 +193,8 @@ ap<B extends object>(fab: Parser<(a: A) => B>): Parser<B> { ... }
 chain<B extends object>(f: (a: A) => Parser<B>): Parser<B> { ... }
 ```
 
+Added in v0.4.0
+
 ## alt (method)
 
 **Signature**
@@ -175,6 +202,8 @@ chain<B extends object>(f: (a: A) => Parser<B>): Parser<B> { ... }
 ```ts
 alt(that: Parser<A>): Parser<A> { ... }
 ```
+
+Added in v0.4.0
 
 ## then (method)
 
@@ -185,6 +214,8 @@ A mapped Monoidal.mult
 ```ts
 then<B extends object>(that: Parser<RowLacks<B, keyof A>>): Parser<A & B> { ... }
 ```
+
+Added in v0.4.0
 
 # Route (class)
 
@@ -199,6 +230,26 @@ export class Route {
 
 Added in v0.4.0
 
+## isEmpty (static method)
+
+**Signature**
+
+```ts
+static isEmpty(r: Route): boolean { ... }
+```
+
+Added in v0.4.0
+
+## parse (static method)
+
+**Signature**
+
+```ts
+static parse(s: string, decode: boolean = true): Route { ... }
+```
+
+Added in v0.4.0
+
 ## toString (method)
 
 **Signature**
@@ -206,6 +257,8 @@ Added in v0.4.0
 ```ts
 toString(encode: boolean = true): string { ... }
 ```
+
+Added in v0.4.0
 
 # end (constant)
 
@@ -239,17 +292,36 @@ Added in v0.4.0
 export function int<K extends string>(k: K): Match<{ [_ in K]: number }> { ... }
 ```
 
+**Example**
+
+```ts
+import { int, Route } from 'fp-ts-routing'
+import { some, none } from 'fp-ts/lib/Option'
+
+assert.deepStrictEqual(int('id').parser.run(Route.parse('/1')), some([{ id: 1 }, new Route([], {})]))
+assert.deepStrictEqual(int('id').parser.run(Route.parse('/a')), none)
+```
+
 Added in v0.4.0
 
 # lit (function)
 
 `lit(x)` will match exactly the path component `x`
-For example, `lit('x')` matches `/x`
 
 **Signature**
 
 ```ts
 export function lit(literal: string): Match<{}> { ... }
+```
+
+**Example**
+
+```ts
+import { lit, Route } from 'fp-ts-routing'
+import { some, none } from 'fp-ts/lib/Option'
+
+assert.deepStrictEqual(lit('subview').parser.run(Route.parse('/subview/')), some([{}, new Route([], {})]))
+assert.deepStrictEqual(lit('subview').parser.run(Route.parse('/')), none)
 ```
 
 Added in v0.4.0
@@ -266,10 +338,29 @@ Added in v0.4.0
 
 # query (function)
 
+Will match a querystring.
+
+**Note**. Use `io-ts`'s `strict` instead of `type` otherwise excess properties won't be removed.
+
 **Signature**
 
 ```ts
 export function query<A extends object, T>(type: Type<A, Record<keyof T, QueryValues>>): Match<A> { ... }
+```
+
+**Example**
+
+```ts
+import * as t from 'io-ts'
+import { lit, str, query, Route } from 'fp-ts-routing'
+
+const route = lit('accounts')
+  .then(str('accountId'))
+  .then(lit('files'))
+  .then(query(t.strict({ pathparam: t.string })))
+  .formatter.run(Route.empty, { accountId: 'testId', pathparam: '123' })
+  .toString()
+assert.strictEqual(route, '/accounts/testId/files?pathparam=123')
 ```
 
 Added in v0.4.0
@@ -282,6 +373,16 @@ Added in v0.4.0
 
 ```ts
 export function str<K extends string>(k: K): Match<{ [_ in K]: string }> { ... }
+```
+
+**Example**
+
+```ts
+import { str, Route } from 'fp-ts-routing'
+import { some, none } from 'fp-ts/lib/Option'
+
+assert.deepStrictEqual(str('id').parser.run(Route.parse('/abc')), some([{ id: 'abc' }, new Route([], {})]))
+assert.deepStrictEqual(str('id').parser.run(Route.parse('/')), none)
 ```
 
 Added in v0.4.0
@@ -306,6 +407,25 @@ Added in v0.4.0
 
 ```ts
 export function type<K extends string, A>(k: K, type: Type<A, string>): Match<{ [_ in K]: A }> { ... }
+```
+
+**Example**
+
+```ts
+import * as t from 'io-ts'
+import { lit, type, Route } from 'fp-ts-routing'
+import { some, none } from 'fp-ts/lib/Option'
+
+const T = t.keyof({
+  a: null,
+  b: null
+})
+
+const match = lit('search').then(type('topic', T))
+
+assert.deepStrictEqual(match.parser.run(Route.parse('/search/a')), some([{ topic: 'a' }, Route.empty]))
+assert.deepStrictEqual(match.parser.run(Route.parse('/search/b')), some([{ topic: 'b' }, Route.empty]))
+assert.deepStrictEqual(match.parser.run(Route.parse('/search/')), none)
 ```
 
 Added in v0.4.0

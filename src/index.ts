@@ -23,18 +23,32 @@ export interface Query {
  * @since 0.4.0
  */
 export class Route {
+  /**
+   * @since 0.4.0
+   */
   static empty = new Route([], {})
   constructor(readonly parts: Array<string>, readonly query: Query) {}
-  static isEmpty = (r: Route) => r.parts.length === 0 && isEmpty(r.query)
-  static parse = (s: string, decode: boolean = true): Route => {
+  /**
+   * @since 0.4.0
+   */
+  static isEmpty(r: Route): boolean {
+    return r.parts.length === 0 && isEmpty(r.query)
+  }
+  /**
+   * @since 0.4.0
+   */
+  static parse(s: string, decode: boolean = true): Route {
     const route = parseUrl(s, true)
     const oparts = option.map(fromNullable(route.pathname), s => {
       const r = s.split('/').filter(Boolean)
       return decode ? r.map(decodeURIComponent) : r
     })
     const parts = isNone(oparts) ? [] : oparts.value
-    return new Route(parts, route.query)
+    return new Route(parts, Object.assign({}, route.query))
   }
+  /**
+   * @since 0.4.0
+   */
   toString(encode: boolean = true): string {
     const nonUndefinedQuery = pipe(
       this.query,
@@ -51,6 +65,7 @@ const assign = <A>(a: A) => <B>(b: B): A & B => Object.assign({}, a, b)
 /**
  * Encodes the constraint that a given object `O`
  * does not contain specific keys `K`
+ *
  * @since 0.4.0
  */
 export type RowLacks<O extends object, K extends string | number | symbol> = O & Record<Extract<keyof O, K>, never>
@@ -61,23 +76,44 @@ export type RowLacks<O extends object, K extends string | number | symbol> = O &
 export class Parser<A extends object> {
   readonly _A!: A
   constructor(readonly run: (r: Route) => Option<[A, Route]>) {}
-  static of = <A extends object>(a: A): Parser<A> => new Parser(s => some(tuple(a, s)))
+  /**
+   * @since 0.4.0
+   */
+  static of<A extends object>(a: A): Parser<A> {
+    return new Parser(s => some(tuple(a, s)))
+  }
+  /**
+   * @since 0.4.0
+   */
   map<B extends object>(f: (a: A) => B): Parser<B> {
     return this.chain(a => Parser.of(f(a))) // <= derived
   }
+  /**
+   * @since 0.4.0
+   */
   ap<B extends object>(fab: Parser<(a: A) => B>): Parser<B> {
     return fab.chain(f => this.map(f)) // <= derived
   }
+  /**
+   * @since 0.4.0
+   */
   chain<B extends object>(f: (a: A) => Parser<B>): Parser<B> {
     return new Parser(r => option.chain(this.run(r), ([a, r2]) => f(a).run(r2)))
   }
+  /**
+   * @since 0.4.0
+   */
   alt(that: Parser<A>): Parser<A> {
     return new Parser(r => {
       const oar = this.run(r)
       return isNone(oar) ? that.run(r) : oar
     })
   }
-  /** A mapped Monoidal.mult */
+  /**
+   * A mapped Monoidal.mult
+   *
+   * @since 0.4.0
+   */
   then<B extends object>(that: Parser<RowLacks<B, keyof A>>): Parser<A & B> {
     return that.ap(this.map(assign as (a: A) => (b: B) => A & B))
   }
@@ -111,9 +147,15 @@ export function format<A extends object>(formatter: Formatter<A>, a: A, encode: 
 export class Formatter<A extends object> {
   readonly _A!: A
   constructor(readonly run: (r: Route, a: A) => Route) {}
+  /**
+   * @since 0.4.0
+   */
   contramap<B extends object>(f: (b: B) => A): Formatter<B> {
     return new Formatter((r, b) => this.run(r, f(b)))
   }
+  /**
+   * @since 0.4.0
+   */
   then<B extends object>(that: Formatter<B> & Formatter<RowLacks<B, keyof A>>): Formatter<A & B> {
     return new Formatter((r, ab) => that.run(this.run(r, ab), ab))
   }
@@ -125,9 +167,15 @@ export class Formatter<A extends object> {
 export class Match<A extends object> {
   readonly _A!: A
   constructor(readonly parser: Parser<A>, readonly formatter: Formatter<A>) {}
+  /**
+   * @since 0.4.0
+   */
   imap<B extends object>(f: (a: A) => B, g: (b: B) => A): Match<B> {
     return new Match(this.parser.map(f), this.formatter.contramap(g))
   }
+  /**
+   * @since 0.4.0
+   */
   then<B extends object>(that: Match<B> & Match<RowLacks<B, keyof A>>): Match<A & B> {
     const p = this.parser.then(that.parser)
     const f = this.formatter.then<B>(that.formatter)
@@ -139,6 +187,7 @@ const singleton = <K extends string, V>(k: K, v: V): { [_ in K]: V } => ({ [k as
 
 /**
  * `succeed` matches everything but consumes nothing
+ *
  * @since 0.4.0
  */
 export function succeed<A extends object>(a: A): Match<A> {
@@ -156,6 +205,23 @@ export const end: Match<{}> = new Match(
 
 /**
  * `type` matches any io-ts type path component
+ *
+ * @example
+ * import * as t from 'io-ts'
+ * import { lit, type, Route } from 'fp-ts-routing'
+ * import { some, none } from 'fp-ts/lib/Option'
+ *
+ * const T = t.keyof({
+ *   a: null,
+ *   b: null
+ * })
+ *
+ * const match = lit('search').then(type('topic', T))
+ *
+ * assert.deepStrictEqual(match.parser.run(Route.parse('/search/a')), some([{ topic: 'a' }, Route.empty]))
+ * assert.deepStrictEqual(match.parser.run(Route.parse('/search/b')), some([{ topic: 'b' }, Route.empty]))
+ * assert.deepStrictEqual(match.parser.run(Route.parse('/search/')), none)
+ *
  * @since 0.4.0
  */
 export function type<K extends string, A>(k: K, type: Type<A, string>): Match<{ [_ in K]: A }> {
@@ -175,6 +241,13 @@ export function type<K extends string, A>(k: K, type: Type<A, string>): Match<{ 
 
 /**
  * `str` matches any string path component
+ *
+ * @example
+ * import { str, Route } from 'fp-ts-routing'
+ * import { some, none } from 'fp-ts/lib/Option'
+ *
+ * assert.deepStrictEqual(str('id').parser.run(Route.parse('/abc')), some([{ id: 'abc' }, new Route([], {})]))
+ * assert.deepStrictEqual(str('id').parser.run(Route.parse('/')), none)
  * @since 0.4.0
  */
 export function str<K extends string>(k: K): Match<{ [_ in K]: string }> {
@@ -197,6 +270,14 @@ export const IntegerFromString = new Type<number, string, unknown>(
 
 /**
  * `int` matches any integer path component
+ *
+ * @example
+ * import { int, Route } from 'fp-ts-routing'
+ * import { some, none } from 'fp-ts/lib/Option'
+ *
+ * assert.deepStrictEqual(int('id').parser.run(Route.parse('/1')), some([{ id: 1 }, new Route([], {})]))
+ * assert.deepStrictEqual(int('id').parser.run(Route.parse('/a')), none)
+ *
  * @since 0.4.0
  */
 export function int<K extends string>(k: K): Match<{ [_ in K]: number }> {
@@ -205,7 +286,14 @@ export function int<K extends string>(k: K): Match<{ [_ in K]: number }> {
 
 /**
  * `lit(x)` will match exactly the path component `x`
- * For example, `lit('x')` matches `/x`
+ *
+ * @example
+ * import { lit, Route } from 'fp-ts-routing'
+ * import { some, none } from 'fp-ts/lib/Option'
+ *
+ * assert.deepStrictEqual(lit('subview').parser.run(Route.parse('/subview/')), some([{}, new Route([], {})]))
+ * assert.deepStrictEqual(lit('subview').parser.run(Route.parse('/')), none)
+ *
  * @since 0.4.0
  */
 export function lit(literal: string): Match<{}> {
@@ -219,12 +307,29 @@ export function lit(literal: string): Match<{}> {
         return head === literal ? some(tuple({}, new Route(tail, r.query))) : none
       }
     }),
-    new Formatter((r, n) => new Route(r.parts.concat(literal), r.query))
+    new Formatter(r => new Route(r.parts.concat(literal), r.query))
   )
 }
 
 /**
- * @since 0.4.0
+ * Will match a querystring.
+ *
+ *
+ * **Note**. Use `io-ts`'s `strict` instead of `type` otherwise excess properties won't be removed.
+ *
+ * @example
+ * import * as t from 'io-ts'
+ * import { lit, str, query, Route } from 'fp-ts-routing'
+ *
+ * const route = lit('accounts')
+ *   .then(str('accountId'))
+ *   .then(lit('files'))
+ *   .then(query(t.strict({ pathparam: t.string })))
+ *   .formatter.run(Route.empty, { accountId: 'testId', pathparam: '123' })
+ *   .toString()
+ * assert.strictEqual(route, '/accounts/testId/files?pathparam=123')
+ *
+ *  @since 0.4.0
  */
 export function query<A extends object, T>(type: Type<A, Record<keyof T, QueryValues>>): Match<A> {
   return new Match(

@@ -8,7 +8,7 @@ npm i fp-ts-routing
 
 # TypeScript compatibility
 
-The stable version is tested against TypeScript 3.2.2
+The stable version is tested against TypeScript 3.5.2 but should run with 3.2.2+ too.
 
 # Usage
 
@@ -84,14 +84,6 @@ assert.strictEqual(parseLocation('/foo'), notFound)
 
 assert.strictEqual(format(userMatch.formatter, { userId: 1 }), '/users/1')
 assert.strictEqual(format(invoiceMatch.formatter, { userId: 1, invoiceId: 2 }), '/users/1/invoice/2')
-```
-
-# Defining new matches via `io-ts` types
-
-The function `type` allows to define a new `Match` from a [io-ts](https://github.com/gcanti/io-ts) runtime type
-
-```ts
-type<K extends string, A>(k: K, type: t.Type<A>): Match<{ [_ in K]: A }>
 ```
 
 # Documentation

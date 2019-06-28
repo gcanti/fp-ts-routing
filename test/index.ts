@@ -45,65 +45,23 @@ describe('IntegerFromString', () => {
 
 describe('Route', () => {
   it('parse', () => {
-    assert.deepEqual(Route.parse(''), {
-      parts: [],
-      query: {}
-    })
-    assert.deepEqual(Route.parse('/'), {
-      parts: [],
-      query: {}
-    })
-    assert.deepEqual(Route.parse('/foo'), {
-      parts: ['foo'],
-      query: {}
-    })
-    assert.deepEqual(Route.parse('/foo/bar'), {
-      parts: ['foo', 'bar'],
-      query: {}
-    })
-    assert.deepEqual(Route.parse('/foo/bar/'), {
-      parts: ['foo', 'bar'],
-      query: {}
-    })
-    assert.deepEqual(Route.parse('/foo/bar?a=1'), {
-      parts: ['foo', 'bar'],
-      query: { a: '1' }
-    })
-    assert.deepEqual(Route.parse('/foo/bar/?a=1'), {
-      parts: ['foo', 'bar'],
-      query: { a: '1' }
-    })
-    assert.deepEqual(Route.parse('/a%20b'), {
-      parts: ['a b'],
-      query: {}
-    })
-    assert.deepEqual(Route.parse('/foo?a=b%20c'), {
-      parts: ['foo'],
-      query: { a: 'b c' }
-    })
-    assert.deepEqual(Route.parse('/@a'), {
-      parts: ['@a'],
-      query: {}
-    })
-    assert.deepEqual(Route.parse('/%40a'), {
-      parts: ['@a'],
-      query: {}
-    })
-    assert.deepEqual(Route.parse('/?a=@b'), {
-      parts: [],
-      query: { a: '@b' }
-    })
-    assert.deepEqual(Route.parse('/?@a=b'), {
-      parts: [],
-      query: { '@a': 'b' }
-    })
+    assert.deepStrictEqual(Route.parse(''), Route.empty)
+    assert.deepStrictEqual(Route.parse('/'), Route.empty)
+    assert.deepStrictEqual(Route.parse('/foo'), new Route(['foo'], {}))
+    assert.deepStrictEqual(Route.parse('/foo/bar'), new Route(['foo', 'bar'], {}))
+    assert.deepStrictEqual(Route.parse('/foo/bar/'), new Route(['foo', 'bar'], {}))
+    assert.deepStrictEqual(Route.parse('/foo/bar?a=1'), new Route(['foo', 'bar'], { a: '1' }))
+    assert.deepStrictEqual(Route.parse('/foo/bar/?a=1'), new Route(['foo', 'bar'], { a: '1' }))
+    assert.deepStrictEqual(Route.parse('/a%20b'), new Route(['a b'], {}))
+    assert.deepStrictEqual(Route.parse('/foo?a=b%20c'), new Route(['foo'], { a: 'b c' }))
+    assert.deepStrictEqual(Route.parse('/@a'), new Route(['@a'], {}))
+    assert.deepStrictEqual(Route.parse('/%40a'), new Route(['@a'], {}))
+    assert.deepStrictEqual(Route.parse('/?a=@b'), new Route([], { a: '@b' }))
+    assert.deepStrictEqual(Route.parse('/?@a=b'), new Route([], { '@a': 'b' }))
   })
 
   it('parse (decode = false)', () => {
-    assert.deepEqual(Route.parse('/%40a', false), {
-      parts: ['%40a'],
-      query: {}
-    })
+    assert.deepStrictEqual(Route.parse('/%40a', false), new Route(['%40a'], {}))
   })
 
   it('toString', () => {
@@ -125,7 +83,7 @@ describe('Route', () => {
   it('toString discards undefined parameters', () => {
     const stringOrUndefined = t.union([t.undefined, t.string])
     const dummy = lit('x').then(query(t.interface({ a: stringOrUndefined, b: stringOrUndefined })))
-    assert.deepEqual(
+    assert.deepStrictEqual(
       dummy.parser.run(Route.parse(format(dummy.formatter, { a: undefined, b: 'evidence' }))),
       some([{ a: undefined, b: 'evidence' }, Route.empty])
     )
@@ -162,7 +120,7 @@ describe('Match', () => {
   it('imap', () => {
     const x = str('id')
     const y = x.imap(({ id }) => ({ userId: id }), ({ userId }) => ({ id: userId }))
-    assert.deepEqual(parse(y.parser, Route.parse('/1'), { userId: '0' }), {
+    assert.deepStrictEqual(parse(y.parser, Route.parse('/1'), { userId: '0' }), {
       userId: '1'
     })
     assert.strictEqual(format(y.formatter, { userId: '1' }), '/1')
@@ -173,37 +131,25 @@ describe('parsers', () => {
   it('type', () => {
     const T = t.keyof({
       a: null,
-      b: null,
-      c: null
+      b: null
     })
-    const match = lit('search')
-      .then(type('topic', T))
-      .then(end)
-    assert.deepEqual(match.parser.run(Route.parse('/search/a')), some([{ topic: 'a' }, { parts: [], query: {} }]))
-    assert.deepEqual(match.parser.run(Route.parse('/search/b')), some([{ topic: 'b' }, { parts: [], query: {} }]))
-    assert.deepEqual(match.parser.run(Route.parse('/search/c')), some([{ topic: 'c' }, { parts: [], query: {} }]))
-    assert.deepEqual(match.parser.run(Route.parse('/search/')), none)
+    const match = lit('search').then(type('topic', T))
+
+    assert.deepStrictEqual(match.parser.run(Route.parse('/search/a')), some([{ topic: 'a' }, Route.empty]))
+    assert.deepStrictEqual(match.parser.run(Route.parse('/search/b')), some([{ topic: 'b' }, Route.empty]))
+    assert.deepStrictEqual(match.parser.run(Route.parse('/search/')), none)
   })
 
   it('str', () => {
-    assert.strictEqual(
-      pipe(
-        str('id').parser.run(Route.parse('/astring')),
-        exists(([{ id }]) => id === 'astring')
-      ),
-      true
-    )
+    assert.deepStrictEqual(str('id').parser.run(Route.parse('/abc')), some([{ id: 'abc' }, new Route([], {})]))
+    assert.deepStrictEqual(str('id').parser.run(Route.parse('/')), none)
   })
 
   it('int', () => {
-    assert.strictEqual(
-      pipe(
-        int('id').parser.run(Route.parse('/1')),
-        exists(([{ id }]) => id === 1)
-      ),
-      true
-    )
-    assert.deepEqual(int('id').parser.run(Route.parse('/1a')), none)
+    assert.deepStrictEqual(int('id').parser.run(Route.parse('/1')), some([{ id: 1 }, new Route([], {})]))
+    assert.deepStrictEqual(int('id').parser.run(Route.parse('/a')), none)
+    assert.deepStrictEqual(int('id').parser.run(Route.parse('/1a')), none)
+    assert.deepStrictEqual(int('id').parser.run(Route.parse('/1.2')), none)
   })
 
   it('query', () => {
@@ -215,12 +161,19 @@ describe('parsers', () => {
       true
     )
     const date = '2018-01-18T14:51:47.912Z'
-    assert.deepEqual(
+    assert.deepStrictEqual(
       query(t.interface({ a: DateFromISOString })).formatter.run(Route.empty, {
         a: new Date(date)
       }),
       new Route([], { a: date })
     )
+    const route = lit('accounts')
+      .then(str('accountId'))
+      .then(lit('files'))
+      .then(query(t.strict({ pathparam: t.string })))
+      .formatter.run(Route.empty, { accountId: 'testId', pathparam: '123' })
+      .toString()
+    assert.strictEqual(route, '/accounts/testId/files?pathparam=123')
   })
 
   it('query accept undefined ', () => {
@@ -233,29 +186,28 @@ describe('parsers', () => {
       true
     )
     assert.strictEqual(isSome(query(Q).parser.run(Route.parse('/foo/bar/?b=1'))), true)
-    assert.deepEqual(query(Q).formatter.run(Route.empty, { a: undefined }), new Route([], { a: undefined }))
-    assert.deepEqual(query(Q).formatter.run(Route.empty, { a: 'baz' }), new Route([], { a: 'baz' }))
+    assert.deepStrictEqual(query(Q).formatter.run(Route.empty, { a: undefined }), new Route([], { a: undefined }))
+    assert.deepStrictEqual(query(Q).formatter.run(Route.empty, { a: 'baz' }), new Route([], { a: 'baz' }))
   })
 
   it('succeed', () => {
-    assert.deepEqual(succeed({}).parser.run(Route.parse('/')), some([{}, { parts: [], query: {} }]))
-    assert.deepEqual(succeed({}).parser.run(Route.parse('/a')), some([{}, { parts: ['a'], query: {} }]))
-    assert.deepEqual(
+    assert.deepStrictEqual(succeed({}).parser.run(Route.parse('/')), some([{}, new Route([], {})]))
+    assert.deepStrictEqual(succeed({}).parser.run(Route.parse('/a')), some([{}, new Route(['a'], {})]))
+    assert.deepStrictEqual(
       succeed({ meaning: 42 }).parser.run(Route.parse('/a')),
-      some([{ meaning: 42 }, { parts: ['a'], query: {} }])
+      some([{ meaning: 42 }, new Route(['a'], {})])
     )
   })
 
   it('end', () => {
     const match = end
-    assert.deepEqual(match.parser.run(Route.parse('/')), some([{}, { parts: [], query: {} }]))
-    assert.deepEqual(match.parser.run(Route.parse('/a')), none)
+    assert.deepStrictEqual(match.parser.run(Route.parse('/')), some([{}, new Route([], {})]))
+    assert.deepStrictEqual(match.parser.run(Route.parse('/a')), none)
   })
 
   it('lit', () => {
-    const match = lit('subview')
-    assert.deepEqual(match.parser.run(Route.parse('/subview/')), some([{}, { parts: [], query: {} }]))
-    assert.deepEqual(match.parser.run(Route.parse('/')), none)
+    assert.deepStrictEqual(lit('subview').parser.run(Route.parse('/subview/')), some([{}, new Route([], {})]))
+    assert.deepStrictEqual(lit('subview').parser.run(Route.parse('/')), none)
   })
 })
 
@@ -308,8 +260,8 @@ describe('Usage example', () => {
   it('should match a location', () => {
     assert.strictEqual(parseLocation('/'), Home.value)
     assert.strictEqual(parseLocation('/home'), Home.value)
-    assert.deepEqual(parseLocation('/users/1'), new User(1))
-    assert.deepEqual(parseLocation('/users/1/invoice/2'), new Invoice(1, 2))
+    assert.deepStrictEqual(parseLocation('/users/1'), new User(1))
+    assert.deepStrictEqual(parseLocation('/users/1/invoice/2'), new Invoice(1, 2))
     assert.strictEqual(parseLocation('/foo'), NotFound.value)
   })
 
