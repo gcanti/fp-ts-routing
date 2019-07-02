@@ -16,7 +16,17 @@ high state of flux, you're at risk of it changing without notice.
 # 0.4.4
 
 - **Bug Fix**
+  - remove `fp-ts@2` from dependencies (@gcanti)
+
+# 0.4.3
+
+- **Bug Fix**
   - move `fp-ts` back to dependencies (@gcanti)
+
+# 0.4.2
+
+- **New Feature**
+  - make `fp-ts-routing` compatible with both `fp-ts@1.x` and `fp-ts@2.x` (@gcanti)
 
 # 0.4.1
 
