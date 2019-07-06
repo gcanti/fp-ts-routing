@@ -1,6 +1,6 @@
 {
   "name": "fp-ts-routing",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "description": "A type-safe routing library for TypeScript",
   "files": [
     "lib",
@@ -34,19 +34,21 @@
     "url": "https://github.com/gcanti/fp-ts-routing/issues"
   },
   "homepage": "https://github.com/gcanti/fp-ts-routing",
-  "dependencies": {
-    "fp-ts": "^1.19.0",
-    "io-ts": "^1.10.0"
+  "peerDependencies": {
+    "fp-ts": "^2.0.1",
+    "io-ts": "^2.0.0"
   },
   "devDependencies": {
     "@types/jest": "^22.2.2",
     "@types/node": "^10.3.3",
     "docs-ts": "^0.1.0",
     "dtslint": "github:gcanti/dtslint",
-    "jest": "^22.4.3",
+    "fp-ts": "^2.0.1",
+    "io-ts": "^2.0.0",
+    "jest": "^24.8.0",
     "mocha": "^6.1.4",
     "prettier": "^1.18.2",
-    "ts-jest": "^22.4.2",
+    "ts-jest": "^24.0.2",
     "ts-node": "3.3.0",
     "tslint": "^5.9.1",
     "tslint-config-standard": "^7.0.0",
@@ -63,30 +65,5 @@
     "functional-programming",
     "routing",
     "applicative"
-  ],
-  "jest": {
-    "globals": {
-      "ts-jest": {
-        "skipBabel": true
-      }
-    },
-    "collectCoverage": true,
-    "transform": {
-      "^.+\\.tsx?$": "ts-jest"
-    },
-    "testRegex": "test",
-    "moduleFileExtensions": [
-      "ts",
-      "js"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "branches": 100,
-        "functions": 100,
-        "lines": 100,
-        "statements": 0
-      }
-    },
-    "testEnvironment": "node"
-  }
+  ]
 }
