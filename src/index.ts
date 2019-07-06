@@ -1,11 +1,11 @@
+import { either } from 'fp-ts/lib/Either'
 import { identity, tuple } from 'fp-ts/lib/function'
-import { fromEither, fromNullable, none, Option, some, option, isNone } from 'fp-ts/lib/Option'
-import { filter, isEmpty } from 'fp-ts/lib/Record'
+import { fromEither, fromNullable, isNone, none, Option, option, some } from 'fp-ts/lib/Option'
 import { pipe } from 'fp-ts/lib/pipeable'
-import { string, Type, Int, failure, success } from 'io-ts'
+import { filter, isEmpty } from 'fp-ts/lib/Record'
+import { failure, Int, string, success, Type } from 'io-ts'
 import { stringify } from 'querystring'
 import { parse as parseUrl } from 'url'
-import { either } from 'fp-ts/lib/Either'
 
 /**
  * @since 0.4.0
