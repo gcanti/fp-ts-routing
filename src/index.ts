@@ -1,12 +1,15 @@
+import { Alternative1 } from 'fp-ts/lib/Alternative'
 import { either } from 'fp-ts/lib/Either'
 import { identity, tuple } from 'fp-ts/lib/function'
+import { Monad1 } from 'fp-ts/lib/Monad'
+import { Monoid } from 'fp-ts/lib/Monoid'
 import { fromEither, fromNullable, isNone, none, Option, option, some } from 'fp-ts/lib/Option'
-import { pipe } from 'fp-ts/lib/pipeable'
+import { pipe, pipeable } from 'fp-ts/lib/pipeable'
 import { filter, isEmpty } from 'fp-ts/lib/Record'
 import { failure, Int, string, success, Type } from 'io-ts'
 import { stringify } from 'querystring'
 import { parse as parseUrl } from 'url'
-import { Monoid } from 'fp-ts/lib/Monoid'
+import { Contravariant1 } from 'fp-ts/lib/Contravariant'
 
 /**
  * @since 0.4.0
@@ -69,36 +72,46 @@ const assign = <A>(a: A) => <B>(b: B): A & B => Object.assign({}, a, b)
  *
  * @since 0.4.0
  */
-export type RowLacks<O extends object, K extends string | number | symbol> = O & Record<Extract<keyof O, K>, never>
+export type RowLacks<O, K extends string | number | symbol> = O & Record<Extract<keyof O, K>, never>
+
+declare module 'fp-ts/lib/HKT' {
+  interface URItoKind<A> {
+    'fp-ts-routing/Parser': Parser<A>
+  }
+}
+
+const PARSER_URI = 'fp-ts-routing/Parser'
+
+type PARSER_URI = typeof PARSER_URI
 
 /**
  * @since 0.4.0
  */
-export class Parser<A extends object> {
+export class Parser<A> {
   readonly _A!: A
   constructor(readonly run: (r: Route) => Option<[A, Route]>) {}
   /**
    * @since 0.4.0
    */
-  static of<A extends object>(a: A): Parser<A> {
+  static of<A>(a: A): Parser<A> {
     return new Parser(s => some(tuple(a, s)))
   }
   /**
    * @since 0.4.0
    */
-  map<B extends object>(f: (a: A) => B): Parser<B> {
+  map<B>(f: (a: A) => B): Parser<B> {
     return this.chain(a => Parser.of(f(a))) // <= derived
   }
   /**
    * @since 0.4.0
    */
-  ap<B extends object>(fab: Parser<(a: A) => B>): Parser<B> {
+  ap<B>(fab: Parser<(a: A) => B>): Parser<B> {
     return fab.chain(f => this.map(f)) // <= derived
   }
   /**
    * @since 0.4.0
    */
-  chain<B extends object>(f: (a: A) => Parser<B>): Parser<B> {
+  chain<B>(f: (a: A) => Parser<B>): Parser<B> {
     return new Parser(r => option.chain(this.run(r), ([a, r2]) => f(a).run(r2)))
   }
   /**
@@ -111,11 +124,9 @@ export class Parser<A extends object> {
     })
   }
   /**
-   * A mapped Monoidal.mult
-   *
    * @since 0.4.0
    */
-  then<B extends object>(that: Parser<RowLacks<B, keyof A>>): Parser<A & B> {
+  then<B>(that: Parser<RowLacks<B, keyof A>>): Parser<A & B> {
     return that.ap(this.map(assign as (a: A) => (b: B) => A & B))
   }
 }
@@ -123,49 +134,96 @@ export class Parser<A extends object> {
 /**
  * @since 0.4.0
  */
-export function zero<A extends object>(): Parser<A> {
+export function zero<A>(): Parser<A> {
   return new Parser(() => none)
 }
 
 /**
  * @since 0.4.0
  */
-export function parse<A extends object>(parser: Parser<A>, r: Route, a: A): A {
+export function parse<A>(parser: Parser<A>, r: Route, a: A): A {
   const oa = option.map(parser.run(r), ([a]) => a)
   return isNone(oa) ? a : oa.value
 }
 
 /**
- * @since 0.4.0
+ * @since 0.5.1
  */
-export function format<A extends object>(formatter: Formatter<A>, a: A, encode: boolean = true): string {
-  return formatter.run(Route.empty, a).toString(encode)
-}
-
-/**
- * @since 0.6.0
- */
-export const getParserMonoid = <A extends object>(): Monoid<Parser<A>> => ({
+export const getParserMonoid = <A>(): Monoid<Parser<A>> => ({
   concat: (x, y) => x.alt(y),
   empty: zero<A>()
 })
 
 /**
+ * @since 0.5.1
+ */
+export const parser: Monad1<PARSER_URI> & Alternative1<PARSER_URI> = {
+  URI: PARSER_URI,
+  map: (ma, f) => ma.map(f),
+  of: Parser.of,
+  ap: (mab, ma) => ma.ap(mab),
+  chain: (ma, f) => ma.chain(f),
+  alt: (fx, f) =>
+    new Parser(r => {
+      const oar = fx.run(r)
+      return isNone(oar) ? f().run(r) : oar
+    }),
+  zero
+}
+
+const { alt, ap, apFirst, apSecond, chain, chainFirst, flatten, map } = pipeable(parser)
+
+export {
+  /**
+   * @since 0.5.1
+   */
+  alt,
+  /**
+   * @since 0.5.1
+   */
+  ap,
+  /**
+   * @since 0.5.1
+   */
+  apFirst,
+  /**
+   * @since 0.5.1
+   */
+  apSecond,
+  /**
+   * @since 0.5.1
+   */
+  chain,
+  /**
+   * @since 0.5.1
+   */
+  chainFirst,
+  /**
+   * @since 0.5.1
+   */
+  flatten,
+  /**
+   * @since 0.5.1
+   */
+  map
+}
+
+/**
  * @since 0.4.0
  */
-export class Formatter<A extends object> {
+export class Formatter<A> {
   readonly _A!: A
   constructor(readonly run: (r: Route, a: A) => Route) {}
   /**
    * @since 0.4.0
    */
-  contramap<B extends object>(f: (b: B) => A): Formatter<B> {
+  contramap<B>(f: (b: B) => A): Formatter<B> {
     return new Formatter((r, b) => this.run(r, f(b)))
   }
   /**
    * @since 0.4.0
    */
-  then<B extends object>(that: Formatter<B> & Formatter<RowLacks<B, keyof A>>): Formatter<A & B> {
+  then<B>(that: Formatter<B> & Formatter<RowLacks<B, keyof A>>): Formatter<A & B> {
     return new Formatter((r, ab) => that.run(this.run(r, ab), ab))
   }
 }
@@ -173,23 +231,71 @@ export class Formatter<A extends object> {
 /**
  * @since 0.4.0
  */
-export class Match<A extends object> {
+export function format<A>(formatter: Formatter<A>, a: A, encode: boolean = true): string {
+  return formatter.run(Route.empty, a).toString(encode)
+}
+
+declare module 'fp-ts/lib/HKT' {
+  interface URItoKind<A> {
+    'fp-ts-routing/Formatter': Formatter<A>
+  }
+}
+
+const FORMATTER_URI = 'fp-ts-routing/Formatter'
+
+type FORMATTER_URI = typeof FORMATTER_URI
+
+/**
+ * @since 0.5.1
+ */
+export const formatter: Contravariant1<FORMATTER_URI> = {
+  URI: FORMATTER_URI,
+  contramap: (fa, f) => fa.contramap(f)
+}
+
+const { contramap } = pipeable(formatter)
+
+export {
+  /**
+   * @since 0.5.1
+   */
+  contramap
+}
+
+/**
+ * @since 0.4.0
+ */
+export class Match<A> {
   readonly _A!: A
   constructor(readonly parser: Parser<A>, readonly formatter: Formatter<A>) {}
   /**
    * @since 0.4.0
    */
-  imap<B extends object>(f: (a: A) => B, g: (b: B) => A): Match<B> {
+  imap<B>(f: (a: A) => B, g: (b: B) => A): Match<B> {
     return new Match(this.parser.map(f), this.formatter.contramap(g))
   }
   /**
    * @since 0.4.0
    */
-  then<B extends object>(that: Match<B> & Match<RowLacks<B, keyof A>>): Match<A & B> {
+  then<B>(that: Match<B> & Match<RowLacks<B, keyof A>>): Match<A & B> {
     const p = this.parser.then(that.parser)
     const f = this.formatter.then<B>(that.formatter)
     return new Match(p, f)
   }
+}
+
+/**
+ * @since 0.5.1
+ */
+export function imap<A, B>(f: (a: A) => B, g: (b: B) => A): (ma: Match<A>) => Match<B> {
+  return ma => ma.imap(f, g)
+}
+
+/**
+ * @since 0.5.1
+ */
+export function then<B>(mb: Match<B>): <A>(ma: Match<A> & Match<RowLacks<A, keyof B>>) => Match<A & B> {
+  return ma => ma.then(mb as any)
 }
 
 const singleton = <K extends string, V>(k: K, v: V): { [_ in K]: V } => ({ [k as any]: v } as any)
@@ -199,7 +305,7 @@ const singleton = <K extends string, V>(k: K, v: V): { [_ in K]: V } => ({ [k as
  *
  * @since 0.4.0
  */
-export function succeed<A extends object>(a: A): Match<A> {
+export function succeed<A>(a: A): Match<A> {
   return new Match(new Parser(r => some(tuple(a, r))), new Formatter(identity))
 }
 
@@ -340,7 +446,7 @@ export function lit(literal: string): Match<{}> {
  *
  *  @since 0.4.0
  */
-export function query<A extends object, T>(type: Type<A, Record<keyof T, QueryValues>>): Match<A> {
+export function query<A, T>(type: Type<A, Record<keyof T, QueryValues>>): Match<A> {
   return new Match(
     new Parser(r => option.map(fromEither(type.decode(r.query)), query => tuple(query, new Route(r.parts, {})))),
     new Formatter((r, query) => new Route(r.parts, type.encode(query)))
