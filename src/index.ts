@@ -6,6 +6,8 @@ import { filter, isEmpty } from 'fp-ts/lib/Record'
 import { failure, Int, string, success, Type } from 'io-ts'
 import { stringify } from 'querystring'
 import { parse as parseUrl } from 'url'
+import { Semigroup } from 'fp-ts/lib/Semigroup'
+import { Monoid } from 'fp-ts/lib/Monoid'
 
 /**
  * @since 0.4.0
@@ -140,6 +142,21 @@ export function parse<A extends object>(parser: Parser<A>, r: Route, a: A): A {
 export function format<A extends object>(formatter: Formatter<A>, a: A, encode: boolean = true): string {
   return formatter.run(Route.empty, a).toString(encode)
 }
+
+/**
+ * @since 0.6.0
+ */
+export const getParserSemigroup = <A extends object>(): Semigroup<Parser<A>> => ({
+  concat: (x, y) => x.alt(y)
+})
+
+/**
+ * @since 0.6.0
+ */
+export const getParserMonoid = <A extends object>(): Monoid<Parser<A>> => ({
+  ...getParserSemigroup<A>(),
+  empty: zero<A>()
+})
 
 /**
  * @since 0.4.0
