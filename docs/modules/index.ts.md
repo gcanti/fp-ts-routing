@@ -31,7 +31,6 @@ parent: Modules
 - [end (constant)](#end-constant)
 - [format (function)](#format-function)
 - [getParserMonoid (function)](#getparsermonoid-function)
-- [getParserSemigroup (function)](#getparsersemigroup-function)
 - [int (function)](#int-function)
 - [lit (function)](#lit-function)
 - [parse (function)](#parse-function)
@@ -289,17 +288,7 @@ Added in v0.4.0
 **Signature**
 
 ```ts
-export const getParserMonoid = <A extends object>(): Monoid<Parser<A>> => ...
-```
-
-Added in v0.6.0
-
-# getParserSemigroup (function)
-
-**Signature**
-
-```ts
-export const getParserSemigroup = <A extends object>(): Semigroup<Parser<A>> => ({
+export const getParserMonoid = <A extends object>(): Monoid<Parser<A>> => ({
   concat: (x, y) => ...
 ```
 
