@@ -6,6 +6,7 @@ import { filter, isEmpty } from 'fp-ts/lib/Record'
 import { failure, Int, string, success, Type } from 'io-ts'
 import { stringify } from 'querystring'
 import { parse as parseUrl } from 'url'
+import { Monoid } from 'fp-ts/lib/Monoid'
 
 /**
  * @since 0.4.0
@@ -140,6 +141,14 @@ export function parse<A extends object>(parser: Parser<A>, r: Route, a: A): A {
 export function format<A extends object>(formatter: Formatter<A>, a: A, encode: boolean = true): string {
   return formatter.run(Route.empty, a).toString(encode)
 }
+
+/**
+ * @since 0.6.0
+ */
+export const getParserMonoid = <A extends object>(): Monoid<Parser<A>> => ({
+  concat: (x, y) => x.alt(y),
+  empty: zero<A>()
+})
 
 /**
  * @since 0.4.0

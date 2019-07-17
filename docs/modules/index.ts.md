@@ -30,6 +30,7 @@ parent: Modules
   - [toString (method)](#tostring-method)
 - [end (constant)](#end-constant)
 - [format (function)](#format-function)
+- [getParserMonoid (function)](#getparsermonoid-function)
 - [int (function)](#int-function)
 - [lit (function)](#lit-function)
 - [parse (function)](#parse-function)
@@ -281,6 +282,17 @@ export function format<A extends object>(formatter: Formatter<A>, a: A, encode: 
 ```
 
 Added in v0.4.0
+
+# getParserMonoid (function)
+
+**Signature**
+
+```ts
+export const getParserMonoid = <A extends object>(): Monoid<Parser<A>> => ({
+  concat: (x, y) => ...
+```
+
+Added in v0.6.0
 
 # int (function)
 

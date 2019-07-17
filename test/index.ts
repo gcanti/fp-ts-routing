@@ -14,7 +14,8 @@ import {
   zero,
   Formatter,
   succeed,
-  IntegerFromString
+  IntegerFromString,
+  getParserMonoid
 } from '../src'
 import { isLeft } from 'fp-ts/lib/Either'
 import { pipe } from 'fp-ts/lib/pipeable'
@@ -208,6 +209,21 @@ describe('parsers', () => {
   it('lit', () => {
     assert.deepStrictEqual(lit('subview').parser.run(Route.parse('/subview/')), some([{}, new Route([], {})]))
     assert.deepStrictEqual(lit('subview').parser.run(Route.parse('/')), none)
+  })
+
+  it('monoid', () => {
+    const monoid = getParserMonoid<{ v: string }>()
+    const parser = monoid.concat(
+      lit('a')
+        .then(end)
+        .parser.map(() => ({ v: 'a' })),
+      lit('b')
+        .then(end)
+        .parser.map(() => ({ v: 'b' }))
+    )
+    assert.deepStrictEqual(parser.run(Route.parse('/a')), some([{ v: 'a' }, new Route([], {})]))
+    assert.deepStrictEqual(parser.run(Route.parse('/b')), some([{ v: 'b' }, new Route([], {})]))
+    assert.deepStrictEqual(parser.run(Route.parse('/c')), none)
   })
 })
 
