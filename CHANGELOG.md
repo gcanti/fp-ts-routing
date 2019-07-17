@@ -13,6 +13,16 @@
 **Note**: Gaps between patch versions are faulty/broken releases. **Note**: A feature tagged as Experimental is in a
 high state of flux, you're at risk of it changing without notice.
 
+# 0.5.1
+
+- **New Feature**
+  - add `Parser` monoid instance (@mlegenhausen)
+  - add `Parser` monad, alternative instance and related top-level data-last functions (@gcanti)
+  - add `Formatter` contravariant instance and related top-level data-last functions (@gcanti)
+  - `Match`
+    - add top-level data-last function `imap` (@gcanti)
+    - add top-level data-last function `then` (@gcanti)
+
 # 0.5.0
 
 - **Breaking Change**

@@ -15,7 +15,11 @@ import {
   Formatter,
   succeed,
   IntegerFromString,
-  getParserMonoid
+  getParserMonoid,
+  parser,
+  formatter,
+  imap,
+  then
 } from '../src'
 import { isLeft } from 'fp-ts/lib/Either'
 import { pipe } from 'fp-ts/lib/pipeable'
@@ -112,15 +116,19 @@ describe('format', () => {
 describe('Formatter', () => {
   it('contramap', () => {
     const x = new Formatter((r, a: { foo: number }) => new Route(r.parts.concat(String(a.foo)), r.query))
-    const y = x.contramap((b: { bar: string }) => ({ foo: b.bar.length }))
-    assert.strictEqual(format(y, { bar: 'baz' }), '/3')
+    assert.strictEqual(
+      format(formatter.contramap(x, (b: { bar: string }) => ({ foo: b.bar.length })), { bar: 'baz' }),
+      '/3'
+    )
   })
 })
 
 describe('Match', () => {
   it('imap', () => {
-    const x = str('id')
-    const y = x.imap(({ id }) => ({ userId: id }), ({ userId }) => ({ id: userId }))
+    const y = pipe(
+      str('id'),
+      imap(({ id }) => ({ userId: id }), ({ userId }) => ({ id: userId }))
+    )
     assert.deepStrictEqual(parse(y.parser, Route.parse('/1'), { userId: '0' }), {
       userId: '1'
     })
@@ -128,13 +136,44 @@ describe('Match', () => {
   })
 })
 
-describe('parsers', () => {
+describe('Parser', () => {
+  it('map', () => {
+    assert.deepStrictEqual(
+      parser.map(str('s').parser, a => a.s.length).run(Route.parse('/aaa')),
+      some([3, Route.empty])
+    )
+  })
+
+  it('ap', () => {
+    const double = (n: number): number => n * 2
+    const mab = parser.of(double)
+    const ma = parser.of(1)
+    assert.deepStrictEqual(parser.ap(mab, ma).run(Route.parse('/')), some([2, Route.empty]))
+  })
+
+  it('chain', () => {
+    assert.deepStrictEqual(
+      parser.chain(str('s').parser, a => parser.of(a.s.length)).run(Route.parse('/aaa')),
+      some([3, Route.empty])
+    )
+  })
+
+  it('alt', () => {
+    const p = parser.alt(lit('a').parser, () => lit('b').parser)
+    assert.deepStrictEqual(p.run(Route.parse('/a')), some([{}, Route.empty]))
+    assert.deepStrictEqual(p.run(Route.parse('/b')), some([{}, Route.empty]))
+    assert.deepStrictEqual(p.run(Route.parse('/c')), none)
+  })
+
   it('type', () => {
     const T = t.keyof({
       a: null,
       b: null
     })
-    const match = lit('search').then(type('topic', T))
+    const match = pipe(
+      lit('search'),
+      then(type('topic', T))
+    )
 
     assert.deepStrictEqual(match.parser.run(Route.parse('/search/a')), some([{ topic: 'a' }, Route.empty]))
     assert.deepStrictEqual(match.parser.run(Route.parse('/search/b')), some([{ topic: 'b' }, Route.empty]))
@@ -211,7 +250,7 @@ describe('parsers', () => {
     assert.deepStrictEqual(lit('subview').parser.run(Route.parse('/')), none)
   })
 
-  it('monoid', () => {
+  it('getParserMonoid', () => {
     const monoid = getParserMonoid<{ v: string }>()
     const parser = monoid.concat(
       lit('a')

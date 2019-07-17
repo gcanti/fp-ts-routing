@@ -29,16 +29,29 @@ parent: Modules
   - [parse (static method)](#parse-static-method)
   - [toString (method)](#tostring-method)
 - [end (constant)](#end-constant)
+- [formatter (constant)](#formatter-constant)
+- [parser (constant)](#parser-constant)
 - [format (function)](#format-function)
 - [getParserMonoid (function)](#getparsermonoid-function)
+- [imap (function)](#imap-function)
 - [int (function)](#int-function)
 - [lit (function)](#lit-function)
 - [parse (function)](#parse-function)
 - [query (function)](#query-function)
 - [str (function)](#str-function)
 - [succeed (function)](#succeed-function)
+- [then (function)](#then-function)
 - [type (function)](#type-function)
 - [zero (function)](#zero-function)
+- [alt (export)](#alt-export)
+- [ap (export)](#ap-export)
+- [apFirst (export)](#apfirst-export)
+- [apSecond (export)](#apsecond-export)
+- [chain (export)](#chain-export)
+- [chainFirst (export)](#chainfirst-export)
+- [contramap (export)](#contramap-export)
+- [flatten (export)](#flatten-export)
+- [map (export)](#map-export)
 
 ---
 
@@ -72,7 +85,7 @@ does not contain specific keys `K`
 **Signature**
 
 ```ts
-export type RowLacks<O extends object, K extends string | number | symbol> = O & Record<Extract<keyof O, K>, never>
+export type RowLacks<O, K extends string | number | symbol> = O & Record<Extract<keyof O, K>, never>
 ```
 
 Added in v0.4.0
@@ -95,7 +108,7 @@ Added in v0.4.0
 **Signature**
 
 ```ts
-contramap<B extends object>(f: (b: B) => A): Formatter<B> { ... }
+contramap<B>(f: (b: B) => A): Formatter<B> { ... }
 ```
 
 Added in v0.4.0
@@ -105,7 +118,7 @@ Added in v0.4.0
 **Signature**
 
 ```ts
-then<B extends object>(that: Formatter<B> & Formatter<RowLacks<B, keyof A>>): Formatter<A & B> { ... }
+then<B>(that: Formatter<B> & Formatter<RowLacks<B, keyof A>>): Formatter<A & B> { ... }
 ```
 
 Added in v0.4.0
@@ -128,7 +141,7 @@ Added in v0.4.0
 **Signature**
 
 ```ts
-imap<B extends object>(f: (a: A) => B, g: (b: B) => A): Match<B> { ... }
+imap<B>(f: (a: A) => B, g: (b: B) => A): Match<B> { ... }
 ```
 
 Added in v0.4.0
@@ -138,7 +151,7 @@ Added in v0.4.0
 **Signature**
 
 ```ts
-then<B extends object>(that: Match<B> & Match<RowLacks<B, keyof A>>): Match<A & B> { ... }
+then<B>(that: Match<B> & Match<RowLacks<B, keyof A>>): Match<A & B> { ... }
 ```
 
 Added in v0.4.0
@@ -161,7 +174,7 @@ Added in v0.4.0
 **Signature**
 
 ```ts
-static of<A extends object>(a: A): Parser<A> { ... }
+static of<A>(a: A): Parser<A> { ... }
 ```
 
 Added in v0.4.0
@@ -171,7 +184,7 @@ Added in v0.4.0
 **Signature**
 
 ```ts
-map<B extends object>(f: (a: A) => B): Parser<B> { ... }
+map<B>(f: (a: A) => B): Parser<B> { ... }
 ```
 
 Added in v0.4.0
@@ -181,7 +194,7 @@ Added in v0.4.0
 **Signature**
 
 ```ts
-ap<B extends object>(fab: Parser<(a: A) => B>): Parser<B> { ... }
+ap<B>(fab: Parser<(a: A) => B>): Parser<B> { ... }
 ```
 
 Added in v0.4.0
@@ -191,7 +204,7 @@ Added in v0.4.0
 **Signature**
 
 ```ts
-chain<B extends object>(f: (a: A) => Parser<B>): Parser<B> { ... }
+chain<B>(f: (a: A) => Parser<B>): Parser<B> { ... }
 ```
 
 Added in v0.4.0
@@ -208,12 +221,10 @@ Added in v0.4.0
 
 ## then (method)
 
-A mapped Monoidal.mult
-
 **Signature**
 
 ```ts
-then<B extends object>(that: Parser<RowLacks<B, keyof A>>): Parser<A & B> { ... }
+then<B>(that: Parser<RowLacks<B, keyof A>>): Parser<A & B> { ... }
 ```
 
 Added in v0.4.0
@@ -273,12 +284,32 @@ export const end: Match<{}> = ...
 
 Added in v0.4.0
 
+# formatter (constant)
+
+**Signature**
+
+```ts
+export const formatter: Contravariant1<FORMATTER_URI> = ...
+```
+
+Added in v0.5.1
+
+# parser (constant)
+
+**Signature**
+
+```ts
+export const parser: Monad1<PARSER_URI> & Alternative1<PARSER_URI> = ...
+```
+
+Added in v0.5.1
+
 # format (function)
 
 **Signature**
 
 ```ts
-export function format<A extends object>(formatter: Formatter<A>, a: A, encode: boolean = true): string { ... }
+export function format<A>(formatter: Formatter<A>, a: A, encode: boolean = true): string { ... }
 ```
 
 Added in v0.4.0
@@ -288,11 +319,21 @@ Added in v0.4.0
 **Signature**
 
 ```ts
-export const getParserMonoid = <A extends object>(): Monoid<Parser<A>> => ({
+export const getParserMonoid = <A>(): Monoid<Parser<A>> => ({
   concat: (x, y) => ...
 ```
 
-Added in v0.6.0
+Added in v0.5.1
+
+# imap (function)
+
+**Signature**
+
+```ts
+export function imap<A, B>(f: (a: A) => B, g: (b: B) => A): (ma: Match<A>) => Match<B> { ... }
+```
+
+Added in v0.5.1
 
 # int (function)
 
@@ -343,7 +384,7 @@ Added in v0.4.0
 **Signature**
 
 ```ts
-export function parse<A extends object>(parser: Parser<A>, r: Route, a: A): A { ... }
+export function parse<A>(parser: Parser<A>, r: Route, a: A): A { ... }
 ```
 
 Added in v0.4.0
@@ -357,7 +398,7 @@ Will match a querystring.
 **Signature**
 
 ```ts
-export function query<A extends object, T>(type: Type<A, Record<keyof T, QueryValues>>): Match<A> { ... }
+export function query<A, T>(type: Type<A, Record<keyof T, QueryValues>>): Match<A> { ... }
 ```
 
 **Example**
@@ -406,10 +447,20 @@ Added in v0.4.0
 **Signature**
 
 ```ts
-export function succeed<A extends object>(a: A): Match<A> { ... }
+export function succeed<A>(a: A): Match<A> { ... }
 ```
 
 Added in v0.4.0
+
+# then (function)
+
+**Signature**
+
+```ts
+export function then<B>(mb: Match<B>): <A>(ma: Match<A> & Match<RowLacks<A, keyof B>>) => Match<A & B> { ... }
+```
+
+Added in v0.5.1
 
 # type (function)
 
@@ -447,7 +498,97 @@ Added in v0.4.0
 **Signature**
 
 ```ts
-export function zero<A extends object>(): Parser<A> { ... }
+export function zero<A>(): Parser<A> { ... }
 ```
 
 Added in v0.4.0
+
+# alt (export)
+
+**Signature**
+
+```ts
+<A>(that: () => Parser<A>) => (fa: Parser<A>) => Parser<A>
+```
+
+Added in v0.5.1
+
+# ap (export)
+
+**Signature**
+
+```ts
+<A>(fa: Parser<A>) => <B>(fab: Parser<(a: A) => B>) => Parser<B>
+```
+
+Added in v0.5.1
+
+# apFirst (export)
+
+**Signature**
+
+```ts
+<B>(fb: Parser<B>) => <A>(fa: Parser<A>) => Parser<A>
+```
+
+Added in v0.5.1
+
+# apSecond (export)
+
+**Signature**
+
+```ts
+<B>(fb: Parser<B>) => <A>(fa: Parser<A>) => Parser<B>
+```
+
+Added in v0.5.1
+
+# chain (export)
+
+**Signature**
+
+```ts
+<A, B>(f: (a: A) => Parser<B>) => (ma: Parser<A>) => Parser<B>
+```
+
+Added in v0.5.1
+
+# chainFirst (export)
+
+**Signature**
+
+```ts
+<A, B>(f: (a: A) => Parser<B>) => (ma: Parser<A>) => Parser<A>
+```
+
+Added in v0.5.1
+
+# contramap (export)
+
+**Signature**
+
+```ts
+<A, B>(f: (b: B) => A) => (fa: Formatter<A>) => Formatter<B>
+```
+
+Added in v0.5.1
+
+# flatten (export)
+
+**Signature**
+
+```ts
+<A>(mma: Parser<Parser<A>>) => Parser<A>
+```
+
+Added in v0.5.1
+
+# map (export)
+
+**Signature**
+
+```ts
+<A, B>(f: (a: A) => B) => (fa: Parser<A>) => Parser<B>
+```
+
+Added in v0.5.1
