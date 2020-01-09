@@ -117,7 +117,10 @@ describe('Formatter', () => {
   it('contramap', () => {
     const x = new Formatter((r, a: { foo: number }) => new Route(r.parts.concat(String(a.foo)), r.query))
     assert.strictEqual(
-      format(formatter.contramap(x, (b: { bar: string }) => ({ foo: b.bar.length })), { bar: 'baz' }),
+      format(
+        formatter.contramap(x, (b: { bar: string }) => ({ foo: b.bar.length })),
+        { bar: 'baz' }
+      ),
       '/3'
     )
   })
@@ -127,7 +130,10 @@ describe('Match', () => {
   it('imap', () => {
     const y = pipe(
       str('id'),
-      imap(({ id }) => ({ userId: id }), ({ userId }) => ({ id: userId }))
+      imap(
+        ({ id }) => ({ userId: id }),
+        ({ userId }) => ({ id: userId })
+      )
     )
     assert.deepStrictEqual(parse(y.parser, Route.parse('/1'), { userId: '0' }), {
       userId: '1'
@@ -170,10 +176,7 @@ describe('Parser', () => {
       a: null,
       b: null
     })
-    const match = pipe(
-      lit('search'),
-      then(type('topic', T))
-    )
+    const match = pipe(lit('search'), then(type('topic', T)))
 
     assert.deepStrictEqual(match.parser.run(Route.parse('/search/a')), some([{ topic: 'a' }, Route.empty]))
     assert.deepStrictEqual(match.parser.run(Route.parse('/search/b')), some([{ topic: 'b' }, Route.empty]))
