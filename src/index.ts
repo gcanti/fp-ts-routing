@@ -1,3 +1,6 @@
+/**
+ * @since 0.4.0
+ */
 import { Alternative1 } from 'fp-ts/lib/Alternative'
 import { either } from 'fp-ts/lib/Either'
 import { identity, tuple } from 'fp-ts/lib/function'

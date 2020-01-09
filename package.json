@@ -1,6 +1,6 @@
 {
   "name": "fp-ts-routing",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "A type-safe routing library for TypeScript",
   "files": [
     "lib",
@@ -11,18 +11,20 @@
   "typings": "lib/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "lint": "tslint -p tsconfig.json src/**/*.ts test/**/*.ts",
+    "lint": "tslint -p .",
     "jest": "jest --ci",
     "jest-coverage": "jest --ci --coverage",
     "prettier": "prettier --no-semi --single-quote --print-width 120 --parser typescript --list-different \"{src,test}/**/*.ts\"",
     "fix-prettier": "prettier --no-semi --single-quote --print-width 120 --parser typescript --write \"{src,test}/**/*.ts\"",
     "test": "npm run prettier && npm run lint && npm run dtslint && npm run jest && npm run docs",
-    "clean": "rm -rf lib/*",
-    "build": "npm run clean && tsc && tsc -p tsconfig.es6.json",
+    "clean": "rm -rf lib/* es6/*",
+    "prebuild": "npm run clean",
+    "build": "tsc -p ./tsconfig.build.json && tsc -p ./tsconfig.build-es6.json",
     "prepublish": "npm run build",
     "dtslint": "dtslint dtslint",
     "docs": "docs-ts",
-    "mocha": "mocha -r ts-node/register test/*.ts"
+    "mocha": "mocha -r ts-node/register test/*.ts",
+    "postbuild": "import-path-rewrite"
   },
   "repository": {
     "type": "git",
@@ -40,14 +42,15 @@
   },
   "devDependencies": {
     "@types/jest": "^22.2.2",
-    "@types/node": "^10.3.3",
-    "docs-ts": "^0.2.0",
+    "@types/node": "^12.6.8",
+    "docs-ts": "^0.3.0",
     "dtslint": "github:gcanti/dtslint",
     "fp-ts": "^2.0.1",
+    "import-path-rewrite": "github:gcanti/import-path-rewrite",
     "io-ts": "^2.0.0",
     "jest": "^24.8.0",
     "mocha": "^6.1.4",
-    "prettier": "^1.18.2",
+    "prettier": "^1.19.1",
     "ts-jest": "^24.0.2",
     "ts-node": "3.3.0",
     "tslint": "^5.9.1",
