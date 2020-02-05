@@ -32,30 +32,30 @@ Added in v0.4.0
   - [isEmpty (static method)](#isempty-static-method)
   - [parse (static method)](#parse-static-method)
   - [toString (method)](#tostring-method)
-- [end (constant)](#end-constant)
-- [formatter (constant)](#formatter-constant)
-- [parser (constant)](#parser-constant)
-- [format (function)](#format-function)
-- [getParserMonoid (function)](#getparsermonoid-function)
-- [imap (function)](#imap-function)
-- [int (function)](#int-function)
-- [lit (function)](#lit-function)
-- [parse (function)](#parse-function)
-- [query (function)](#query-function)
-- [str (function)](#str-function)
-- [succeed (function)](#succeed-function)
-- [then (function)](#then-function)
-- [type (function)](#type-function)
-- [zero (function)](#zero-function)
-- [alt (export)](#alt-export)
-- [ap (export)](#ap-export)
-- [apFirst (export)](#apfirst-export)
-- [apSecond (export)](#apsecond-export)
-- [chain (export)](#chain-export)
-- [chainFirst (export)](#chainfirst-export)
-- [contramap (export)](#contramap-export)
-- [flatten (export)](#flatten-export)
-- [map (export)](#map-export)
+- [alt](#alt)
+- [ap](#ap)
+- [apFirst](#apfirst)
+- [apSecond](#apsecond)
+- [chain](#chain)
+- [chainFirst](#chainfirst)
+- [contramap](#contramap)
+- [end](#end)
+- [flatten](#flatten)
+- [format](#format)
+- [formatter](#formatter)
+- [getParserMonoid](#getparsermonoid)
+- [imap](#imap)
+- [int](#int)
+- [lit](#lit)
+- [map](#map)
+- [parse](#parse)
+- [parser](#parser)
+- [query](#query)
+- [str](#str)
+- [succeed](#succeed)
+- [then](#then)
+- [type](#type)
+- [zero](#zero)
 
 ---
 
@@ -276,7 +276,77 @@ toString(encode: boolean = true): string { ... }
 
 Added in v0.4.0
 
-# end (constant)
+# alt
+
+**Signature**
+
+```ts
+<A>(that: () => Parser<A>) => (fa: Parser<A>) => Parser<A>
+```
+
+Added in v0.5.1
+
+# ap
+
+**Signature**
+
+```ts
+<A>(fa: Parser<A>) => <B>(fab: Parser<(a: A) => B>) => Parser<B>
+```
+
+Added in v0.5.1
+
+# apFirst
+
+**Signature**
+
+```ts
+<B>(fb: Parser<B>) => <A>(fa: Parser<A>) => Parser<A>
+```
+
+Added in v0.5.1
+
+# apSecond
+
+**Signature**
+
+```ts
+<B>(fb: Parser<B>) => <A>(fa: Parser<A>) => Parser<B>
+```
+
+Added in v0.5.1
+
+# chain
+
+**Signature**
+
+```ts
+<A, B>(f: (a: A) => Parser<B>) => (ma: Parser<A>) => Parser<B>
+```
+
+Added in v0.5.1
+
+# chainFirst
+
+**Signature**
+
+```ts
+<A, B>(f: (a: A) => Parser<B>) => (ma: Parser<A>) => Parser<A>
+```
+
+Added in v0.5.1
+
+# contramap
+
+**Signature**
+
+```ts
+<A, B>(f: (b: B) => A) => (fa: Formatter<A>) => Formatter<B>
+```
+
+Added in v0.5.1
+
+# end
 
 `end` matches the end of a route
 
@@ -288,27 +358,17 @@ export const end: Match<{}> = ...
 
 Added in v0.4.0
 
-# formatter (constant)
+# flatten
 
 **Signature**
 
 ```ts
-export const formatter: Contravariant1<FORMATTER_URI> = ...
+<A>(mma: Parser<Parser<A>>) => Parser<A>
 ```
 
 Added in v0.5.1
 
-# parser (constant)
-
-**Signature**
-
-```ts
-export const parser: Monad1<PARSER_URI> & Alternative1<PARSER_URI> = ...
-```
-
-Added in v0.5.1
-
-# format (function)
+# format
 
 **Signature**
 
@@ -318,7 +378,17 @@ export function format<A>(formatter: Formatter<A>, a: A, encode: boolean = true)
 
 Added in v0.4.0
 
-# getParserMonoid (function)
+# formatter
+
+**Signature**
+
+```ts
+export const formatter: Contravariant1<FORMATTER_URI> = ...
+```
+
+Added in v0.5.1
+
+# getParserMonoid
 
 **Signature**
 
@@ -329,7 +399,7 @@ export const getParserMonoid = <A>(): Monoid<Parser<A>> => ({
 
 Added in v0.5.1
 
-# imap (function)
+# imap
 
 **Signature**
 
@@ -339,7 +409,7 @@ export function imap<A, B>(f: (a: A) => B, g: (b: B) => A): (ma: Match<A>) => Ma
 
 Added in v0.5.1
 
-# int (function)
+# int
 
 `int` matches any integer path component
 
@@ -361,7 +431,7 @@ assert.deepStrictEqual(int('id').parser.run(Route.parse('/a')), none)
 
 Added in v0.4.0
 
-# lit (function)
+# lit
 
 `lit(x)` will match exactly the path component `x`
 
@@ -383,7 +453,17 @@ assert.deepStrictEqual(lit('subview').parser.run(Route.parse('/')), none)
 
 Added in v0.4.0
 
-# parse (function)
+# map
+
+**Signature**
+
+```ts
+<A, B>(f: (a: A) => B) => (fa: Parser<A>) => Parser<B>
+```
+
+Added in v0.5.1
+
+# parse
 
 **Signature**
 
@@ -393,7 +473,17 @@ export function parse<A>(parser: Parser<A>, r: Route, a: A): A { ... }
 
 Added in v0.4.0
 
-# query (function)
+# parser
+
+**Signature**
+
+```ts
+export const parser: Monad1<PARSER_URI> & Alternative1<PARSER_URI> = ...
+```
+
+Added in v0.5.1
+
+# query
 
 Will match a querystring.
 
@@ -422,7 +512,7 @@ assert.strictEqual(route, '/accounts/testId/files?pathparam=123')
 
 Added in v0.4.0
 
-# str (function)
+# str
 
 `str` matches any string path component
 
@@ -444,7 +534,7 @@ assert.deepStrictEqual(str('id').parser.run(Route.parse('/')), none)
 
 Added in v0.4.0
 
-# succeed (function)
+# succeed
 
 `succeed` matches everything but consumes nothing
 
@@ -456,7 +546,7 @@ export function succeed<A>(a: A): Match<A> { ... }
 
 Added in v0.4.0
 
-# then (function)
+# then
 
 **Signature**
 
@@ -466,7 +556,7 @@ export function then<B>(mb: Match<B>): <A>(ma: Match<A> & Match<RowLacks<A, keyo
 
 Added in v0.5.1
 
-# type (function)
+# type
 
 `type` matches any io-ts type path component
 
@@ -497,7 +587,7 @@ assert.deepStrictEqual(match.parser.run(Route.parse('/search/')), none)
 
 Added in v0.4.0
 
-# zero (function)
+# zero
 
 **Signature**
 
@@ -506,93 +596,3 @@ export function zero<A>(): Parser<A> { ... }
 ```
 
 Added in v0.4.0
-
-# alt (export)
-
-**Signature**
-
-```ts
-<A>(that: () => Parser<A>) => (fa: Parser<A>) => Parser<A>
-```
-
-Added in v0.5.1
-
-# ap (export)
-
-**Signature**
-
-```ts
-<A>(fa: Parser<A>) => <B>(fab: Parser<(a: A) => B>) => Parser<B>
-```
-
-Added in v0.5.1
-
-# apFirst (export)
-
-**Signature**
-
-```ts
-<B>(fb: Parser<B>) => <A>(fa: Parser<A>) => Parser<A>
-```
-
-Added in v0.5.1
-
-# apSecond (export)
-
-**Signature**
-
-```ts
-<B>(fb: Parser<B>) => <A>(fa: Parser<A>) => Parser<B>
-```
-
-Added in v0.5.1
-
-# chain (export)
-
-**Signature**
-
-```ts
-<A, B>(f: (a: A) => Parser<B>) => (ma: Parser<A>) => Parser<B>
-```
-
-Added in v0.5.1
-
-# chainFirst (export)
-
-**Signature**
-
-```ts
-<A, B>(f: (a: A) => Parser<B>) => (ma: Parser<A>) => Parser<A>
-```
-
-Added in v0.5.1
-
-# contramap (export)
-
-**Signature**
-
-```ts
-<A, B>(f: (b: B) => A) => (fa: Formatter<A>) => Formatter<B>
-```
-
-Added in v0.5.1
-
-# flatten (export)
-
-**Signature**
-
-```ts
-<A>(mma: Parser<Parser<A>>) => Parser<A>
-```
-
-Added in v0.5.1
-
-# map (export)
-
-**Signature**
-
-```ts
-<A, B>(f: (a: A) => B) => (fa: Parser<A>) => Parser<B>
-```
-
-Added in v0.5.1
