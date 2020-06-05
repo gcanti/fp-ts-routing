@@ -233,6 +233,53 @@ describe('Parser', () => {
     assert.deepStrictEqual(query(Q).formatter.run(Route.empty, { a: 'baz' }), new Route([], { a: 'baz' }))
   })
 
+  it('query works with partial codecs', () => {
+    const Q = t.partial({ a: t.string, b: t.string })
+
+    assert.strictEqual(
+      pipe(
+        query(Q).parser.run(Route.parse('/foo/bar')),
+        exists(([{ a, b }]) => a === undefined && b === undefined)
+      ),
+      true
+    )
+
+    assert.strictEqual(
+      pipe(
+        query(Q).parser.run(Route.parse('/foo/bar?a=baz')),
+        exists(([{ a, b }]) => a === 'baz' && b === undefined)
+      ),
+      true
+    )
+
+    assert.strictEqual(
+      pipe(
+        query(Q).parser.run(Route.parse('/foo/bar?a=baz&b=quu')),
+        exists(([{ a, b }]) => a === 'baz' && b === 'quu')
+      ),
+      true
+    )
+
+    assert.deepStrictEqual(query(Q).formatter.run(Route.empty, {}), new Route([], {}))
+    assert.deepStrictEqual(query(Q).formatter.run(Route.empty, { a: 'baz' }), new Route([], { a: 'baz' }))
+    assert.deepStrictEqual(
+      query(Q).formatter.run(Route.empty, { a: 'baz', b: 'quu' }),
+      new Route([], { a: 'baz', b: 'quu' })
+    )
+  })
+
+  it('query deletes extranous params for exact partial codecs', () => {
+    const Q = t.exact(t.partial({ a: t.string }))
+
+    assert.strictEqual(
+      pipe(
+        query(Q).parser.run(Route.parse('/foo/bar?b=baz')),
+        exists(([q]) => (q as any)['b'] === undefined)
+      ),
+      true
+    )
+  })
+
   it('succeed', () => {
     assert.deepStrictEqual(succeed({}).parser.run(Route.parse('/')), some([{}, new Route([], {})]))
     assert.deepStrictEqual(succeed({}).parser.run(Route.parse('/a')), some([{}, new Route(['a'], {})]))

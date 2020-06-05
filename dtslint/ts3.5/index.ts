@@ -14,3 +14,9 @@ pipe(
 declare const BadQuery: t.Type<{ a: string; b: number }, { a: string } & { b: number }>
 // $ExpectError
 R.query(BadQuery)
+
+const PartialQuery = t.partial({ a: t.string });
+R.query(PartialQuery);
+
+const ExactPartialQuery = t.exact(t.partial({ a: t.string }));
+R.query(ExactPartialQuery);
