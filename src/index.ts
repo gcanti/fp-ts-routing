@@ -449,7 +449,7 @@ export function lit(literal: string): Match<{}> {
  *
  *  @since 0.4.0
  */
-export function query<A, T>(type: Type<A, Record<keyof T, QueryValues>>): Match<A> {
+export function query<A>(type: Type<A, Record<string, QueryValues>>): Match<A> {
   return new Match(
     new Parser(r => option.map(fromEither(type.decode(r.query)), query => tuple(query, new Route(r.parts, {})))),
     new Formatter((r, query) => new Route(r.parts, type.encode(query)))
