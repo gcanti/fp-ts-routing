@@ -1,6 +1,6 @@
 {
   "name": "fp-ts-routing",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "A type-safe routing library for TypeScript",
   "files": [
     "lib",
@@ -43,7 +43,7 @@
   "devDependencies": {
     "@types/jest": "^22.2.2",
     "@types/node": "^12.6.8",
-    "docs-ts": "^0.3.4",
+    "docs-ts": "^0.5.0",
     "dtslint": "github:gcanti/dtslint",
     "fp-ts": "^2.0.1",
     "import-path-rewrite": "github:gcanti/import-path-rewrite",
@@ -53,9 +53,9 @@
     "prettier": "^1.19.1",
     "ts-jest": "^24.0.2",
     "ts-node": "3.3.0",
-    "tslint": "^5.9.1",
-    "tslint-config-standard": "^7.0.0",
-    "typescript": "^3.5.2"
+    "tslint": "^5.11.0",
+    "tslint-config-standard": "^8.0.1",
+    "typescript": "^3.9.5"
   },
   "tags": [
     "typescript",
