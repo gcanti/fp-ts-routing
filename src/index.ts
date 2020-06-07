@@ -15,11 +15,13 @@ import { parse as parseUrl } from 'url'
 import { Contravariant1 } from 'fp-ts/lib/Contravariant'
 
 /**
+ * @category routes
  * @since 0.4.0
  */
 export type QueryValues = string | Array<string> | undefined
 
 /**
+ * @category routes
  * @since 0.4.0
  */
 export interface Query {
@@ -27,6 +29,7 @@ export interface Query {
 }
 
 /**
+ * @category routes
  * @since 0.4.0
  */
 export class Route {
@@ -88,9 +91,13 @@ const PARSER_URI = 'fp-ts-routing/Parser'
 type PARSER_URI = typeof PARSER_URI
 
 /**
+ * @category parsers
  * @since 0.4.0
  */
 export class Parser<A> {
+  /**
+   * @since 0.4.0
+   */
   readonly _A!: A
   constructor(readonly run: (r: Route) => Option<[A, Route]>) {}
   /**
@@ -135,6 +142,7 @@ export class Parser<A> {
 }
 
 /**
+ * @category parsers
  * @since 0.4.0
  */
 export function zero<A>(): Parser<A> {
@@ -142,6 +150,7 @@ export function zero<A>(): Parser<A> {
 }
 
 /**
+ * @category parsers
  * @since 0.4.0
  */
 export function parse<A>(parser: Parser<A>, r: Route, a: A): A {
@@ -150,6 +159,7 @@ export function parse<A>(parser: Parser<A>, r: Route, a: A): A {
 }
 
 /**
+ * @category parsers
  * @since 0.5.1
  */
 export const getParserMonoid = <A>(): Monoid<Parser<A>> => ({
@@ -158,6 +168,7 @@ export const getParserMonoid = <A>(): Monoid<Parser<A>> => ({
 })
 
 /**
+ * @category parsers
  * @since 0.5.1
  */
 export const parser: Monad1<PARSER_URI> & Alternative1<PARSER_URI> = {
@@ -178,43 +189,55 @@ const { alt, ap, apFirst, apSecond, chain, chainFirst, flatten, map } = pipeable
 
 export {
   /**
+   * @category parsers
    * @since 0.5.1
    */
   alt,
   /**
+   * @category parsers
    * @since 0.5.1
    */
   ap,
   /**
+   * @category parsers
    * @since 0.5.1
    */
   apFirst,
   /**
+   * @category parsers
    * @since 0.5.1
    */
   apSecond,
   /**
+   * @category parsers
    * @since 0.5.1
    */
   chain,
   /**
+   * @category parsers
    * @since 0.5.1
    */
   chainFirst,
   /**
+   * @category parsers
    * @since 0.5.1
    */
   flatten,
   /**
+   * @category parsers
    * @since 0.5.1
    */
   map
 }
 
 /**
+ * @category formatters
  * @since 0.4.0
  */
 export class Formatter<A> {
+  /**
+   * @since 0.4.0
+   */
   readonly _A!: A
   constructor(readonly run: (r: Route, a: A) => Route) {}
   /**
@@ -232,6 +255,7 @@ export class Formatter<A> {
 }
 
 /**
+ * @category formatters
  * @since 0.4.0
  */
 export function format<A>(formatter: Formatter<A>, a: A, encode: boolean = true): string {
@@ -249,6 +273,7 @@ const FORMATTER_URI = 'fp-ts-routing/Formatter'
 type FORMATTER_URI = typeof FORMATTER_URI
 
 /**
+ * @category formatters
  * @since 0.5.1
  */
 export const formatter: Contravariant1<FORMATTER_URI> = {
@@ -260,15 +285,20 @@ const { contramap } = pipeable(formatter)
 
 export {
   /**
+   * @category formatters
    * @since 0.5.1
    */
   contramap
 }
 
 /**
+ * @category matchers
  * @since 0.4.0
  */
 export class Match<A> {
+  /**
+   * @since 0.4.0
+   */
   readonly _A!: A
   constructor(readonly parser: Parser<A>, readonly formatter: Formatter<A>) {}
   /**
@@ -288,6 +318,7 @@ export class Match<A> {
 }
 
 /**
+ * @category matchers
  * @since 0.5.1
  */
 export function imap<A, B>(f: (a: A) => B, g: (b: B) => A): (ma: Match<A>) => Match<B> {
@@ -295,6 +326,7 @@ export function imap<A, B>(f: (a: A) => B, g: (b: B) => A): (ma: Match<A>) => Ma
 }
 
 /**
+ * @category matchers
  * @since 0.5.1
  */
 export function then<B>(mb: Match<B>): <A>(ma: Match<A> & Match<RowLacks<A, keyof B>>) => Match<A & B> {
@@ -306,6 +338,7 @@ const singleton = <K extends string, V>(k: K, v: V): { [_ in K]: V } => ({ [k as
 /**
  * `succeed` matches everything but consumes nothing
  *
+ * @category matchers
  * @since 0.4.0
  */
 export function succeed<A>(a: A): Match<A> {
@@ -314,6 +347,8 @@ export function succeed<A>(a: A): Match<A> {
 
 /**
  * `end` matches the end of a route
+ *
+ * @category matchers
  * @since 0.4.0
  */
 export const end: Match<{}> = new Match(
@@ -340,6 +375,7 @@ export const end: Match<{}> = new Match(
  * assert.deepStrictEqual(match.parser.run(Route.parse('/search/b')), some([{ topic: 'b' }, Route.empty]))
  * assert.deepStrictEqual(match.parser.run(Route.parse('/search/')), none)
  *
+ * @category matchers
  * @since 0.4.0
  */
 export function type<K extends string, A>(k: K, type: Type<A, string>): Match<{ [_ in K]: A }> {
@@ -366,6 +402,8 @@ export function type<K extends string, A>(k: K, type: Type<A, string>): Match<{ 
  *
  * assert.deepStrictEqual(str('id').parser.run(Route.parse('/abc')), some([{ id: 'abc' }, new Route([], {})]))
  * assert.deepStrictEqual(str('id').parser.run(Route.parse('/')), none)
+ *
+ * @category matchers
  * @since 0.4.0
  */
 export function str<K extends string>(k: K): Match<{ [_ in K]: string }> {
@@ -396,6 +434,7 @@ export const IntegerFromString = new Type<number, string, unknown>(
  * assert.deepStrictEqual(int('id').parser.run(Route.parse('/1')), some([{ id: 1 }, new Route([], {})]))
  * assert.deepStrictEqual(int('id').parser.run(Route.parse('/a')), none)
  *
+ * @category matchers
  * @since 0.4.0
  */
 export function int<K extends string>(k: K): Match<{ [_ in K]: number }> {
@@ -412,6 +451,7 @@ export function int<K extends string>(k: K): Match<{ [_ in K]: number }> {
  * assert.deepStrictEqual(lit('subview').parser.run(Route.parse('/subview/')), some([{}, new Route([], {})]))
  * assert.deepStrictEqual(lit('subview').parser.run(Route.parse('/')), none)
  *
+ * @category matchers
  * @since 0.4.0
  */
 export function lit(literal: string): Match<{}> {
@@ -447,7 +487,8 @@ export function lit(literal: string): Match<{}> {
  *   .toString()
  * assert.strictEqual(route, '/accounts/testId/files?pathparam=123')
  *
- *  @since 0.4.0
+ * @category matchers
+ * @since 0.4.0
  */
 export function query<A>(type: Type<A, Record<string, QueryValues>>): Match<A> {
   return new Match(
