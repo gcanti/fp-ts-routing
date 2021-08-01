@@ -6,12 +6,10 @@ import { either } from 'fp-ts/lib/Either'
 import { identity, tuple } from 'fp-ts/lib/function'
 import { Monad1 } from 'fp-ts/lib/Monad'
 import { Monoid } from 'fp-ts/lib/Monoid'
-import { fromEither, fromNullable, isNone, none, Option, option, some } from 'fp-ts/lib/Option'
+import { fromEither, isNone, none, Option, option, some } from 'fp-ts/lib/Option'
 import { pipe, pipeable } from 'fp-ts/lib/pipeable'
-import { filter, isEmpty } from 'fp-ts/lib/Record'
+import { isEmpty } from 'fp-ts/lib/Record'
 import { failure, Int, string, success, Type } from 'io-ts'
-import { stringify } from 'querystring'
-import { parse as parseUrl } from 'url'
 import { Contravariant1 } from 'fp-ts/lib/Contravariant'
 
 /**
@@ -26,6 +24,43 @@ export type QueryValues = string | Array<string> | undefined
  */
 export interface Query {
   [key: string]: QueryValues
+}
+
+const Query = {
+  fromURLSearchParams: (searchParams: URLSearchParams): Query => {
+    const query: Query = {}
+
+    searchParams.forEach((v, k) => {
+      const q = query[k]
+      if (Array.isArray(q)) {
+        q.push(v)
+      } else if (q === undefined) {
+        query[k] = v
+      } else {
+        query[k] = [q, v]
+      }
+    })
+
+    return query
+  },
+  toURLSearchParams: (query: Query): URLSearchParams => {
+    const searchParams = new URLSearchParams()
+
+    for (let key in query) {
+      const value = query[key]
+      if (value === undefined) {
+        continue
+      } else if (Array.isArray(value)) {
+        value.forEach(v => {
+          searchParams.append(key, v)
+        })
+      } else {
+        searchParams.set(key, value)
+      }
+    }
+
+    return searchParams
+  }
 }
 
 /**
@@ -48,23 +83,21 @@ export class Route {
    * @since 0.4.0
    */
   static parse(s: string, decode: boolean = true): Route {
-    const route = parseUrl(s, true)
-    const oparts = option.map(fromNullable(route.pathname), s => {
+    // Any valid origin can be used as the second argument as the value itself won't be used.
+    const { pathname, searchParams } = new URL(s, 'https://example.com')
+    const parts = pipe(pathname, s => {
       const r = s.split('/').filter(Boolean)
       return decode ? r.map(decodeURIComponent) : r
     })
-    const parts = isNone(oparts) ? [] : oparts.value
-    return new Route(parts, Object.assign({}, route.query))
+    const query = Query.fromURLSearchParams(searchParams)
+    return new Route(parts, query)
   }
   /**
    * @since 0.4.0
    */
   toString(encode: boolean = true): string {
-    const nonUndefinedQuery = pipe(
-      this.query,
-      filter(value => value !== undefined)
-    )
-    const qs = stringify(nonUndefinedQuery)
+    const searchParams = Query.toURLSearchParams(this.query)
+    const qs = searchParams.toString().replace(/\+/g, '%20')
     const parts = encode ? this.parts.map(encodeURIComponent) : this.parts
     return '/' + parts.join('/') + (qs ? '?' + qs : '')
   }
