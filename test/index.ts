@@ -63,6 +63,7 @@ describe('Route', () => {
     assert.deepStrictEqual(Route.parse('/%40a'), new Route(['@a'], {}))
     assert.deepStrictEqual(Route.parse('/?a=@b'), new Route([], { a: '@b' }))
     assert.deepStrictEqual(Route.parse('/?@a=b'), new Route([], { '@a': 'b' }))
+    assert.deepStrictEqual(Route.parse('/?a=b&a=c&a=d'), new Route([], { a: ['b', 'c', 'd'] }))
   })
 
   it('parse (decode = false)', () => {
@@ -75,6 +76,7 @@ describe('Route', () => {
     assert.strictEqual(new Route(['a'], { b: 'b' }).toString(), '/a?b=b')
     assert.strictEqual(new Route(['a'], { b: 'b c' }).toString(), '/a?b=b%20c')
     assert.strictEqual(new Route(['a c'], { b: 'b' }).toString(), '/a%20c?b=b')
+    assert.strictEqual(new Route(['a'], { b: ['b', 'c', 'd'] }).toString(), '/a?b=b&b=c&b=d')
     assert.strictEqual(new Route(['@a'], {}).toString(), '/%40a')
     assert.strictEqual(new Route(['a&b'], {}).toString(), '/a%26b')
     assert.strictEqual(new Route([], { a: '@b' }).toString(), '/?a=%40b')
