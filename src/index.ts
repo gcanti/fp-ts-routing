@@ -2,7 +2,7 @@
  * @since 0.4.0
  */
 import { Alternative1 } from 'fp-ts/lib/Alternative'
-import { either } from 'fp-ts/lib/Either'
+import { Either, either } from 'fp-ts/lib/Either'
 import { identity, tuple } from 'fp-ts/lib/function'
 import { Monad1 } from 'fp-ts/lib/Monad'
 import { Monoid } from 'fp-ts/lib/Monoid'
@@ -10,6 +10,7 @@ import { fromEither, fromNullable, isNone, none, Option, option, some } from 'fp
 import { pipe, pipeable } from 'fp-ts/lib/pipeable'
 import { filter, isEmpty } from 'fp-ts/lib/Record'
 import { failure, Int, string, success, Type } from 'io-ts'
+import { Codec } from 'io-ts/Codec'
 import { stringify } from 'querystring'
 import { parse as parseUrl } from 'url'
 import { Contravariant1 } from 'fp-ts/lib/Contravariant'
@@ -357,7 +358,7 @@ export const end: Match<{}> = new Match(
 )
 
 /**
- * `type` matches any io-ts type path component
+ * `type` matches any io-ts type or codec path component
  *
  * @example
  * import * as t from 'io-ts'
@@ -378,7 +379,10 @@ export const end: Match<{}> = new Match(
  * @category matchers
  * @since 0.4.0
  */
-export function type<K extends string, A>(k: K, type: Type<A, string>): Match<{ [_ in K]: A }> {
+export function type<K extends string, A>(
+  k: K,
+  type: Type<A, string> | Codec<string, string, A>
+): Match<{ [_ in K]: A }> {
   return new Match(
     new Parser(r => {
       if (r.parts.length === 0) {
@@ -386,7 +390,9 @@ export function type<K extends string, A>(k: K, type: Type<A, string>): Match<{ 
       } else {
         const head = r.parts[0]
         const tail = r.parts.slice(1)
-        return option.map(fromEither(type.decode(head)), a => tuple(singleton(k, a), new Route(tail, r.query)))
+        return option.map(fromEither(type.decode(head) as Either<any, A>), a =>
+          tuple(singleton(k, a), new Route(tail, r.query))
+        )
       }
     }),
     new Formatter((r, o) => new Route(r.parts.concat(type.encode(o[k])), r.query))
@@ -490,9 +496,13 @@ export function lit(literal: string): Match<{}> {
  * @category matchers
  * @since 0.4.0
  */
-export function query<A>(type: Type<A, Record<string, QueryValues>>): Match<A> {
+export function query<A>(
+  type: Type<A, Record<string, QueryValues>> | Codec<unknown, Record<string, QueryValues>, A>
+): Match<A> {
   return new Match(
-    new Parser(r => option.map(fromEither(type.decode(r.query)), query => tuple(query, new Route(r.parts, {})))),
+    new Parser(r =>
+      option.map(fromEither(type.decode(r.query) as Either<any, A>), query => tuple(query, new Route(r.parts, {})))
+    ),
     new Formatter((r, query) => new Route(r.parts, type.encode(query)))
   )
 }

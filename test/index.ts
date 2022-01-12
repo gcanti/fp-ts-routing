@@ -1,5 +1,7 @@
 import * as assert from 'assert'
 import * as t from 'io-ts'
+import * as c from 'io-ts/Codec'
+import * as d from 'io-ts/Decoder'
 import { some, none, exists, isSome } from 'fp-ts/lib/Option'
 import {
   end,
@@ -38,6 +40,32 @@ export const DateFromISOString = new t.Type(
     }
   },
   a => a.toISOString()
+)
+
+const DateFromISOStringC = c.make(
+  pipe(
+    d.string,
+    d.parse(s => {
+      const date = new Date(s)
+      return isNaN(date.getTime()) ? d.failure(s, 'Not a valid date') : d.success(date)
+    })
+  ),
+  {
+    encode: date => date.toISOString()
+  }
+)
+
+const IntegerFromStringC = c.make(
+  pipe(
+    d.string,
+    d.parse(s => {
+      const n = +s
+      return isNaN(n) || !Number.isInteger(n) ? d.failure(s, 'Not an integer') : d.success(n)
+    })
+  ),
+  {
+    encode: String
+  }
 )
 
 describe('IntegerFromString', () => {
@@ -176,10 +204,17 @@ describe('Parser', () => {
       a: null,
       b: null
     })
-    const match = pipe(lit('search'), then(type('topic', T)))
+    const C = c.literal('c', 'd')
+    const match = pipe(lit('search'), then(type('topic', T)), then(type('category', C)))
 
-    assert.deepStrictEqual(match.parser.run(Route.parse('/search/a')), some([{ topic: 'a' }, Route.empty]))
-    assert.deepStrictEqual(match.parser.run(Route.parse('/search/b')), some([{ topic: 'b' }, Route.empty]))
+    assert.deepStrictEqual(
+      match.parser.run(Route.parse('/search/a/c')),
+      some([{ topic: 'a', category: 'c' }, Route.empty])
+    )
+    assert.deepStrictEqual(
+      match.parser.run(Route.parse('/search/b/d')),
+      some([{ topic: 'b', category: 'd' }, Route.empty])
+    )
     assert.deepStrictEqual(match.parser.run(Route.parse('/search/')), none)
   })
 
@@ -203,6 +238,14 @@ describe('Parser', () => {
       ),
       true
     )
+    assert.strictEqual(
+      pipe(
+        query(c.struct({ a: c.string, b: IntegerFromStringC })).parser.run(Route.parse('/foo/bar/?a=baz&b=1')),
+        exists(([{ a, b }]) => a === 'baz' && b === 1)
+      ),
+      true
+    )
+
     const date = '2018-01-18T14:51:47.912Z'
     assert.deepStrictEqual(
       query(t.interface({ a: DateFromISOString })).formatter.run(Route.empty, {
@@ -210,6 +253,13 @@ describe('Parser', () => {
       }),
       new Route([], { a: date })
     )
+    assert.deepStrictEqual(
+      query(c.struct({ a: DateFromISOStringC })).formatter.run(Route.empty, {
+        a: new Date(date)
+      }),
+      new Route([], { a: date })
+    )
+
     const route = lit('accounts')
       .then(str('accountId'))
       .then(lit('files'))
@@ -217,6 +267,14 @@ describe('Parser', () => {
       .formatter.run(Route.empty, { accountId: 'testId', pathparam: '123' })
       .toString()
     assert.strictEqual(route, '/accounts/testId/files?pathparam=123')
+
+    const route2 = lit('accounts')
+      .then(str('accountId'))
+      .then(lit('files'))
+      .then(query(c.struct({ pathparam: c.string })))
+      .formatter.run(Route.empty, { accountId: 'testId', pathparam: '123' })
+      .toString()
+    assert.strictEqual(route2, '/accounts/testId/files?pathparam=123')
   })
 
   it('query accept undefined ', () => {
@@ -264,6 +322,39 @@ describe('Parser', () => {
     assert.deepStrictEqual(query(Q).formatter.run(Route.empty, { a: 'baz' }), new Route([], { a: 'baz' }))
     assert.deepStrictEqual(
       query(Q).formatter.run(Route.empty, { a: 'baz', b: 'quu' }),
+      new Route([], { a: 'baz', b: 'quu' })
+    )
+
+    const Q2 = c.partial({ a: c.string, b: c.string })
+
+    assert.strictEqual(
+      pipe(
+        query(Q2).parser.run(Route.parse('/foo/bar')),
+        exists(([{ a, b }]) => a === undefined && b === undefined)
+      ),
+      true
+    )
+
+    assert.strictEqual(
+      pipe(
+        query(Q2).parser.run(Route.parse('/foo/bar?a=baz')),
+        exists(([{ a, b }]) => a === 'baz' && b === undefined)
+      ),
+      true
+    )
+
+    assert.strictEqual(
+      pipe(
+        query(Q2).parser.run(Route.parse('/foo/bar?a=baz&b=quu')),
+        exists(([{ a, b }]) => a === 'baz' && b === 'quu')
+      ),
+      true
+    )
+
+    assert.deepStrictEqual(query(Q2).formatter.run(Route.empty, {}), new Route([], {}))
+    assert.deepStrictEqual(query(Q2).formatter.run(Route.empty, { a: 'baz' }), new Route([], { a: 'baz' }))
+    assert.deepStrictEqual(
+      query(Q2).formatter.run(Route.empty, { a: 'baz', b: 'quu' }),
       new Route([], { a: 'baz', b: 'quu' })
     )
   })

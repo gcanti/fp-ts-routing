@@ -47,7 +47,7 @@
     "dtslint": "github:gcanti/dtslint",
     "fp-ts": "^2.0.1",
     "import-path-rewrite": "github:gcanti/import-path-rewrite",
-    "io-ts": "^2.0.0",
+    "io-ts": "^2.2.16",
     "jest": "^24.8.0",
     "mocha": "^6.1.4",
     "prettier": "^1.19.1",

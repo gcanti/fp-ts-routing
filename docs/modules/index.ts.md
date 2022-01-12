@@ -260,7 +260,9 @@ Will match a querystring.
 **Signature**
 
 ```ts
-export declare function query<A>(type: Type<A, Record<string, QueryValues>>): Match<A>
+export declare function query<A>(
+  type: Type<A, Record<string, QueryValues>> | Codec<unknown, Record<string, QueryValues>, A>
+): Match<A>
 ```
 
 **Example**
@@ -326,12 +328,15 @@ Added in v0.5.1
 
 ## type
 
-`type` matches any io-ts type path component
+`type` matches any io-ts type or codec path component
 
 **Signature**
 
 ```ts
-export declare function type<K extends string, A>(k: K, type: Type<A, string>): Match<{ [_ in K]: A }>
+export declare function type<K extends string, A>(
+  k: K,
+  type: Type<A, string> | Codec<string, string, A>
+): Match<{ [_ in K]: A }>
 ```
 
 **Example**
