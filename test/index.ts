@@ -295,6 +295,11 @@ describe('Parser', () => {
     assert.deepStrictEqual(match.parser.run(Route.parse('/a')), none)
   })
 
+  it('end does not contain a then function', () => {
+    // @ts-expect-error
+    assert.throws(() => end.then(query(t.type({ foo: t.string }))), TypeError);
+  })
+
   it('lit', () => {
     assert.deepStrictEqual(lit('subview').parser.run(Route.parse('/subview/')), some([{}, new Route([], {})]))
     assert.deepStrictEqual(lit('subview').parser.run(Route.parse('/')), none)
@@ -304,10 +309,10 @@ describe('Parser', () => {
     const monoid = getParserMonoid<{ v: string }>()
     const parser = monoid.concat(
       lit('a')
-        .then(end)
+        .end()
         .parser.map(() => ({ v: 'a' })),
       lit('b')
-        .then(end)
+        .end()
         .parser.map(() => ({ v: 'b' }))
     )
     assert.deepStrictEqual(parser.run(Route.parse('/a')), some([{ v: 'a' }, new Route([], {})]))
@@ -344,13 +349,13 @@ describe('Usage example', () => {
 
   // matches
   const defaults = end
-  const home = lit('home').then(end)
+  const home = lit('home').end()
   const userId = lit('users').then(int('userId'))
-  const user = userId.then(end)
+  const user = userId.end()
   const invoice = userId
     .then(lit('invoice'))
     .then(int('invoiceId'))
-    .then(end)
+    .end()
 
   // router
   const router = zero<Location>()

@@ -48,13 +48,13 @@ const notFound: Location = { _tag: 'NotFound' }
 
 // matches
 const defaults = end
-const homeMatch = lit('home').then(end)
+const homeMatch = lit('home').end()
 const userIdMatch = lit('users').then(int('userId'))
-const userMatch = userIdMatch.then(end)
+const userMatch = userIdMatch.end()
 const invoiceMatch = userIdMatch
   .then(lit('invoice'))
   .then(int('invoiceId'))
-  .then(end)
+  .end()
 
 // router
 const router = zero<Location>()

@@ -293,14 +293,21 @@ export {
 
 /**
  * @category matchers
- * @since 0.4.0
+ * @since 0.6.0
  */
-export class Match<A> {
+export class MatchEnd<A> {
   /**
    * @since 0.4.0
    */
   readonly _A!: A
   constructor(readonly parser: Parser<A>, readonly formatter: Formatter<A>) {}
+}
+
+/**
+ * @category matchers
+ * @since 0.4.0
+ */
+export class Match<A> extends MatchEnd<A> {
   /**
    * @since 0.4.0
    */
@@ -314,6 +321,13 @@ export class Match<A> {
     const p = this.parser.then(that.parser)
     const f = this.formatter.then<B>(that.formatter)
     return new Match(p, f)
+  }
+
+  end(): MatchEnd<A> {
+    return this.then(new Match(
+      new Parser(r => (Route.isEmpty(r) ? some(tuple({}, r)) : none)),
+      new Formatter(identity)
+    ))
   }
 }
 
@@ -351,7 +365,7 @@ export function succeed<A>(a: A): Match<A> {
  * @category matchers
  * @since 0.4.0
  */
-export const end: Match<{}> = new Match(
+export const end: MatchEnd<{}> = new MatchEnd(
   new Parser(r => (Route.isEmpty(r) ? some(tuple({}, r)) : none)),
   new Formatter(identity)
 )
