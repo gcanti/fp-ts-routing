@@ -49,7 +49,8 @@ export class Route {
    */
   static parse(s: string, decode: boolean = true): Route {
     const route = parseUrl(s, true)
-    const oparts = option.map(fromNullable(route.pathname), s => {
+    // tslint:disable-next-line: deprecation
+    const oparts = option.map(fromNullable(route.pathname), (s) => {
       const r = s.split('/').filter(Boolean)
       return decode ? r.map(decodeURIComponent) : r
     })
@@ -60,9 +61,10 @@ export class Route {
    * @since 0.4.0
    */
   toString(encode: boolean = true): string {
+    // tslint:disable-next-line: deprecation
     const nonUndefinedQuery = pipe(
       this.query,
-      filter(value => value !== undefined)
+      filter((value) => value !== undefined)
     )
     const qs = stringify(nonUndefinedQuery)
     const parts = encode ? this.parts.map(encodeURIComponent) : this.parts
@@ -70,7 +72,10 @@ export class Route {
   }
 }
 
-const assign = <A>(a: A) => <B>(b: B): A & B => Object.assign({}, a, b)
+const assign =
+  <A>(a: A) =>
+  <B>(b: B): A & B =>
+    Object.assign({}, a, b)
 
 /**
  * Encodes the constraint that a given object `O`
@@ -104,31 +109,32 @@ export class Parser<A> {
    * @since 0.4.0
    */
   static of<A>(a: A): Parser<A> {
-    return new Parser(s => some(tuple(a, s)))
+    return new Parser((s) => some(tuple(a, s)))
   }
   /**
    * @since 0.4.0
    */
   map<B>(f: (a: A) => B): Parser<B> {
-    return this.chain(a => Parser.of(f(a))) // <= derived
+    return this.chain((a) => Parser.of(f(a))) // <= derived
   }
   /**
    * @since 0.4.0
    */
   ap<B>(fab: Parser<(a: A) => B>): Parser<B> {
-    return fab.chain(f => this.map(f)) // <= derived
+    return fab.chain((f) => this.map(f)) // <= derived
   }
   /**
    * @since 0.4.0
    */
   chain<B>(f: (a: A) => Parser<B>): Parser<B> {
-    return new Parser(r => option.chain(this.run(r), ([a, r2]) => f(a).run(r2)))
+    // tslint:disable-next-line: deprecation
+    return new Parser((r) => option.chain(this.run(r), ([a, r2]) => f(a).run(r2)))
   }
   /**
    * @since 0.4.0
    */
   alt(that: Parser<A>): Parser<A> {
-    return new Parser(r => {
+    return new Parser((r) => {
       const oar = this.run(r)
       return isNone(oar) ? that.run(r) : oar
     })
@@ -154,6 +160,7 @@ export function zero<A>(): Parser<A> {
  * @since 0.4.0
  */
 export function parse<A>(parser: Parser<A>, r: Route, a: A): A {
+  // tslint:disable-next-line: deprecation
   const oa = option.map(parser.run(r), ([a]) => a)
   return isNone(oa) ? a : oa.value
 }
@@ -178,13 +185,14 @@ export const parser: Monad1<PARSER_URI> & Alternative1<PARSER_URI> = {
   ap: (mab, ma) => ma.ap(mab),
   chain: (ma, f) => ma.chain(f),
   alt: (fx, f) =>
-    new Parser(r => {
+    new Parser((r) => {
       const oar = fx.run(r)
       return isNone(oar) ? f().run(r) : oar
     }),
   zero
 }
 
+// tslint:disable-next-line: deprecation
 const { alt, ap, apFirst, apSecond, chain, chainFirst, flatten, map } = pipeable(parser)
 
 export {
@@ -281,6 +289,7 @@ export const formatter: Contravariant1<FORMATTER_URI> = {
   contramap: (fa, f) => fa.contramap(f)
 }
 
+// tslint:disable-next-line: deprecation
 const { contramap } = pipeable(formatter)
 
 export {
@@ -322,7 +331,7 @@ export class Match<A> {
  * @since 0.5.1
  */
 export function imap<A, B>(f: (a: A) => B, g: (b: B) => A): (ma: Match<A>) => Match<B> {
-  return ma => ma.imap(f, g)
+  return (ma) => ma.imap(f, g)
 }
 
 /**
@@ -330,7 +339,7 @@ export function imap<A, B>(f: (a: A) => B, g: (b: B) => A): (ma: Match<A>) => Ma
  * @since 0.5.1
  */
 export function then<B>(mb: Match<B>): <A>(ma: Match<A> & Match<RowLacks<A, keyof B>>) => Match<A & B> {
-  return ma => ma.then(mb as any)
+  return (ma) => ma.then(mb as any)
 }
 
 const singleton = <K extends string, V>(k: K, v: V): { [_ in K]: V } => ({ [k as any]: v } as any)
@@ -342,7 +351,7 @@ const singleton = <K extends string, V>(k: K, v: V): { [_ in K]: V } => ({ [k as
  * @since 0.4.0
  */
 export function succeed<A>(a: A): Match<A> {
-  return new Match(new Parser(r => some(tuple(a, r))), new Formatter(identity))
+  return new Match(new Parser((r) => some(tuple(a, r))), new Formatter(identity))
 }
 
 /**
@@ -352,7 +361,7 @@ export function succeed<A>(a: A): Match<A> {
  * @since 0.4.0
  */
 export const end: Match<{}> = new Match(
-  new Parser(r => (Route.isEmpty(r) ? some(tuple({}, r)) : none)),
+  new Parser((r) => (Route.isEmpty(r) ? some(tuple({}, r)) : none)),
   new Formatter(identity)
 )
 
@@ -380,13 +389,14 @@ export const end: Match<{}> = new Match(
  */
 export function type<K extends string, A>(k: K, type: Type<A, string>): Match<{ [_ in K]: A }> {
   return new Match(
-    new Parser(r => {
+    new Parser((r) => {
       if (r.parts.length === 0) {
         return none
       } else {
         const head = r.parts[0]
         const tail = r.parts.slice(1)
-        return option.map(fromEither(type.decode(head)), a => tuple(singleton(k, a), new Route(tail, r.query)))
+        // tslint:disable-next-line: deprecation
+        return option.map(fromEither(type.decode(head)), (a) => tuple(singleton(k, a), new Route(tail, r.query)))
       }
     }),
     new Formatter((r, o) => new Route(r.parts.concat(type.encode(o[k])), r.query))
@@ -417,7 +427,8 @@ export const IntegerFromString = new Type<number, string, unknown>(
   'IntegerFromString',
   (u): u is number => Int.is(u),
   (u, c) =>
-    either.chain(string.validate(u, c), s => {
+    // tslint:disable-next-line: deprecation
+    either.chain(string.validate(u, c), (s) => {
       const n = +s
       return isNaN(n) || !Number.isInteger(n) ? failure(s, c) : success(n)
     }),
@@ -456,7 +467,7 @@ export function int<K extends string>(k: K): Match<{ [_ in K]: number }> {
  */
 export function lit(literal: string): Match<{}> {
   return new Match(
-    new Parser(r => {
+    new Parser((r) => {
       if (r.parts.length === 0) {
         return none
       } else {
@@ -465,7 +476,7 @@ export function lit(literal: string): Match<{}> {
         return head === literal ? some(tuple({}, new Route(tail, r.query))) : none
       }
     }),
-    new Formatter(r => new Route(r.parts.concat(literal), r.query))
+    new Formatter((r) => new Route(r.parts.concat(literal), r.query))
   )
 }
 
@@ -492,7 +503,8 @@ export function lit(literal: string): Match<{}> {
  */
 export function query<A>(type: Type<A, Record<string, QueryValues>>): Match<A> {
   return new Match(
-    new Parser(r => option.map(fromEither(type.decode(r.query)), query => tuple(query, new Route(r.parts, {})))),
+    // tslint:disable-next-line: deprecation
+    new Parser((r) => option.map(fromEither(type.decode(r.query)), (query) => tuple(query, new Route(r.parts, {})))),
     new Formatter((r, query) => new Route(r.parts, type.encode(query)))
   )
 }
