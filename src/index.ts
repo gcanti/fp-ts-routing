@@ -18,7 +18,7 @@ import { Contravariant1 } from 'fp-ts/lib/Contravariant'
  * @category routes
  * @since 0.4.0
  */
-export type QueryValues = string | Array<string> | undefined
+export type QueryValues = string | Array<string>
 
 /**
  * @category routes
