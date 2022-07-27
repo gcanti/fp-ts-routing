@@ -501,7 +501,7 @@ export function lit(literal: string): Match<{}> {
  * @category matchers
  * @since 0.4.0
  */
-export function query<A>(type: Type<A, Record<string, QueryValues>>): Match<A> {
+export function query<A>(type: Type<A, Query>): Match<A> {
   return new Match(
     // tslint:disable-next-line: deprecation
     new Parser((r) => option.map(fromEither(type.decode(r.query)), (query) => tuple(query, new Route(r.parts, {})))),
