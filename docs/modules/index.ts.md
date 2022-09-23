@@ -348,7 +348,7 @@ import { some, none } from 'fp-ts/lib/Option'
 
 const T = t.keyof({
   a: null,
-  b: null
+  b: null,
 })
 
 const match = lit('search').then(type('topic', T))
@@ -449,7 +449,7 @@ Added in v0.4.0
 **Signature**
 
 ```ts
-export declare const alt: <A>(that: () => Parser<A>) => (fa: Parser<A>) => Parser<A>
+export declare const alt: <A>(that: Lazy<Parser<A>>) => (fa: Parser<A>) => Parser<A>
 ```
 
 Added in v0.5.1
