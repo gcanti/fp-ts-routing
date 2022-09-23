@@ -45,20 +45,20 @@ export const DateFromISOString = new t.Type(
 const DateFromISOStringC = c.make(
   pipe(
     d.string,
-    d.parse(s => {
+    d.parse((s) => {
       const date = new Date(s)
       return isNaN(date.getTime()) ? d.failure(s, 'Not a valid date') : d.success(date)
     })
   ),
   {
-    encode: date => date.toISOString()
+    encode: (date) => date.toISOString()
   }
 )
 
 const IntegerFromStringC = c.make(
   pipe(
     d.string,
-    d.parse(s => {
+    d.parse((s) => {
       const n = +s
       return isNaN(n) || !Number.isInteger(n) ? d.failure(s, 'Not an integer') : d.success(n)
     })

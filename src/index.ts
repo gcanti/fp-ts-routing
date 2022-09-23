@@ -511,8 +511,8 @@ export function query<A>(
   type: Type<A, Record<string, QueryValues>> | Codec<unknown, Record<string, QueryValues>, A>
 ): Match<A> {
   return new Match(
-    // tslint:disable-next-line: deprecation
     new Parser((r) =>
+      // tslint:disable-next-line: deprecation
       option.map(fromEither(type.decode(r.query) as Either<any, A>), (query) => tuple(query, new Route(r.parts, {})))
     ),
     new Formatter((r, query) => new Route(r.parts, type.encode(query)))
