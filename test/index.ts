@@ -22,7 +22,7 @@ import {
   then
 } from '../src'
 import { isLeft } from 'fp-ts/lib/Either'
-import { pipe } from 'fp-ts/lib/pipeable'
+import { pipe } from 'fp-ts/lib/function'
 
 export const DateFromISOString = new t.Type(
   'DateFromISOString',
@@ -37,7 +37,7 @@ export const DateFromISOString = new t.Type(
       return isNaN(d.getTime()) ? t.failure(s, c) : t.success(d)
     }
   },
-  a => a.toISOString()
+  (a) => a.toISOString()
 )
 
 describe('IntegerFromString', () => {
@@ -147,7 +147,7 @@ describe('Match', () => {
 describe('Parser', () => {
   it('map', () => {
     assert.deepStrictEqual(
-      parser.map(str('s').parser, a => a.s.length).run(Route.parse('/aaa')),
+      parser.map(str('s').parser, (a) => a.s.length).run(Route.parse('/aaa')),
       some([3, Route.empty])
     )
   })
@@ -161,7 +161,7 @@ describe('Parser', () => {
 
   it('chain', () => {
     assert.deepStrictEqual(
-      parser.chain(str('s').parser, a => parser.of(a.s.length)).run(Route.parse('/aaa')),
+      parser.chain(str('s').parser, (a) => parser.of(a.s.length)).run(Route.parse('/aaa')),
       some([3, Route.empty])
     )
   })
@@ -349,10 +349,7 @@ describe('Usage example', () => {
   const home = lit('home').then(end)
   const userId = lit('users').then(int('userId'))
   const user = userId.then(end)
-  const invoice = userId
-    .then(lit('invoice'))
-    .then(int('invoiceId'))
-    .then(end)
+  const invoice = userId.then(lit('invoice')).then(int('invoiceId')).then(end)
 
   // router
   const router = zero<Location>()
