@@ -21,24 +21,12 @@ import {
   imap,
   then
 } from '../src'
-import { isLeft } from 'fp-ts/lib/Either'
+import * as Arr from 'fp-ts/lib/Array'
+import * as E from 'fp-ts/lib/Either'
+import * as S from 'fp-ts/lib/string'
 import { pipe } from 'fp-ts/lib/function'
 
-export const DateFromISOString = new t.Type(
-  'DateFromISOString',
-  (u): u is Date => u instanceof Date,
-  (u, c) => {
-    const validation = t.string.validate(u, c)
-    if (isLeft(validation)) {
-      return validation as any
-    } else {
-      const s = validation.right
-      const d = new Date(s)
-      return isNaN(d.getTime()) ? t.failure(s, c) : t.success(d)
-    }
-  },
-  (a) => a.toISOString()
-)
+const arrEquals = Arr.getEq(S.Eq)
 
 describe('IntegerFromString', () => {
   it('is', () => {
@@ -199,6 +187,22 @@ describe('Parser', () => {
   })
 
   it('query', () => {
+    const DateFromISOString = new t.Type(
+      'DateFromISOString',
+      (u): u is Date => u instanceof Date,
+      (u, c) => {
+        const validation = t.string.validate(u, c)
+        if (E.isLeft(validation)) {
+          return validation as any
+        } else {
+          const s = validation.right
+          const d = new Date(s)
+          return isNaN(d.getTime()) ? t.failure(s, c) : t.success(d)
+        }
+      },
+      (a) => a.toISOString()
+    )
+
     assert.strictEqual(
       pipe(
         query(t.interface({ a: t.string, b: IntegerFromString })).parser.run(Route.parse('/foo/bar/?a=baz&b=1')),
@@ -207,18 +211,21 @@ describe('Parser', () => {
       true
     )
     const date = '2018-01-18T14:51:47.912Z'
+
     assert.deepStrictEqual(
       query(t.interface({ a: DateFromISOString })).formatter.run(Route.empty, {
         a: new Date(date)
       }),
       new Route([], { a: date })
     )
+
     const route = lit('accounts')
       .then(str('accountId'))
       .then(lit('files'))
       .then(query(t.strict({ pathparam: t.string })))
       .formatter.run(Route.empty, { accountId: 'testId', pathparam: '123' })
       .toString()
+
     assert.strictEqual(route, '/accounts/testId/files?pathparam=123')
   })
 
@@ -237,7 +244,18 @@ describe('Parser', () => {
   })
 
   it('query works with partial codecs', () => {
-    const Q = t.partial({ a: t.string, b: t.string })
+    type StringOrArray = t.TypeOf<typeof stringOrArray>
+    const stringOrArray = t.union([t.string, t.array(t.string)])
+    const normalize = (v: StringOrArray): Array<string> => (Array.isArray(v) ? v : [v])
+
+    const arrayParam = new t.Type<string | Array<string>, Array<string>>(
+      'ArrayParameter',
+      (u): u is StringOrArray => stringOrArray.is(u),
+      (u, c) => pipe(stringOrArray.validate(u, c), E.map(normalize)),
+      normalize
+    )
+
+    const Q = t.partial({ a: t.string, b: t.string, c: arrayParam })
 
     assert.strictEqual(
       pipe(
@@ -263,12 +281,42 @@ describe('Parser', () => {
       true
     )
 
+    assert.strictEqual(
+      pipe(
+        query(Q).parser.run(Route.parse('/foo/bar?a=baz&c=quu')),
+        exists(([{ a, c }]) => a === 'baz' && Array.isArray(c) && arrEquals.equals(c, ['quu']))
+      ),
+      true
+    )
+
+    assert.strictEqual(
+      pipe(
+        query(Q).parser.run(Route.parse('/foo/bar?a=baz&c=1&c=2&c=3')),
+        exists(([{ a, c }]) => a === 'baz' && Array.isArray(c) && arrEquals.equals(c, ['1', '2', '3']))
+      ),
+      true
+    )
+
     assert.deepStrictEqual(query(Q).formatter.run(Route.empty, {}), new Route([], {}))
     assert.deepStrictEqual(query(Q).formatter.run(Route.empty, { a: 'baz' }), new Route([], { a: 'baz' }))
     assert.deepStrictEqual(
       query(Q).formatter.run(Route.empty, { a: 'baz', b: 'quu' }),
       new Route([], { a: 'baz', b: 'quu' })
     )
+  })
+
+  it('query works with array partial', () => {
+    const Q = t.partial({ a: t.array(t.string) })
+
+    assert.strictEqual(
+      pipe(
+        query(Q).parser.run(Route.parse('/foo/bar?a=baz&a=bar')),
+        exists(([{ a }]) => Array.isArray(a) && a[0] === 'baz')
+      ),
+      true
+    )
+
+    assert.deepStrictEqual(query(Q).formatter.run(Route.empty, { a: ['baz'] }), new Route([], { a: ['baz'] }))
   })
 
   it('query deletes extranous params for exact partial codecs', () => {
