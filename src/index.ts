@@ -6,12 +6,10 @@ import { either } from 'fp-ts/lib/Either'
 import { identity, tuple } from 'fp-ts/lib/function'
 import { Monad1 } from 'fp-ts/lib/Monad'
 import { Monoid } from 'fp-ts/lib/Monoid'
-import { fromEither, fromNullable, isNone, none, Option, option, some } from 'fp-ts/lib/Option'
-import { pipe, pipeable } from 'fp-ts/lib/pipeable'
-import { filter, isEmpty } from 'fp-ts/lib/Record'
+import { fromEither, isNone, none, Option, option, some } from 'fp-ts/lib/Option'
+import { pipeable } from 'fp-ts/lib/pipeable'
+import { isEmpty } from 'fp-ts/lib/Record'
 import { failure, Int, string, success, Type } from 'io-ts'
-import { stringify } from 'querystring'
-import { parse as parseUrl } from 'url'
 import { Contravariant1 } from 'fp-ts/lib/Contravariant'
 
 /**
@@ -48,28 +46,51 @@ export class Route {
    * @since 0.4.0
    */
   static parse(s: string, decode: boolean = true): Route {
-    const route = parseUrl(s, true)
-    // tslint:disable-next-line: deprecation
-    const oparts = option.map(fromNullable(route.pathname), (s) => {
-      const r = s.split('/').filter(Boolean)
-      return decode ? r.map(decodeURIComponent) : r
-    })
-    const parts = isNone(oparts) ? [] : oparts.value
-    return new Route(parts, Object.assign({}, route.query))
+    const { pathname, searchParams } = new URL(s, 'http://localhost') // `base` is needed when `path` is relative
+
+    const segments = pathname.split('/').filter(Boolean)
+    const parts = decode ? segments.map(decodeURIComponent) : segments
+
+    return new Route(parts, toQuery(searchParams))
   }
   /**
    * @since 0.4.0
    */
   toString(encode: boolean = true): string {
-    // tslint:disable-next-line: deprecation
-    const nonUndefinedQuery = pipe(
-      this.query,
-      filter((value) => value !== undefined)
-    )
-    const qs = stringify(nonUndefinedQuery)
+    const qs = fromQuery(this.query).toString()
     const parts = encode ? this.parts.map(encodeURIComponent) : this.parts
     return '/' + parts.join('/') + (qs ? '?' + qs : '')
   }
+}
+
+const fromQuery = (query: Query): URLSearchParams => {
+  const qs = new URLSearchParams()
+
+  Object.entries(query).forEach(([k, v]) => {
+    if (typeof v === 'undefined') {
+      return
+    }
+
+    return Array.isArray(v) ? v.forEach((x) => qs.append(k, x)) : qs.set(k, v)
+  })
+
+  return qs
+}
+
+const toQuery = (params: URLSearchParams): Query => {
+  const q: Query = {}
+
+  params.forEach((v, k) => {
+    const current = q[k]
+
+    if (current) {
+      q[k] = Array.isArray(current) ? [...current, v] : [current, v]
+    } else {
+      q[k] = v
+    }
+  })
+
+  return q
 }
 
 const assign =
