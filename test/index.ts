@@ -246,9 +246,9 @@ describe('Parser', () => {
   it('query works with partial codecs', () => {
     type StringOrArray = t.TypeOf<typeof stringOrArray>
     const stringOrArray = t.union([t.string, t.array(t.string)])
-    const normalize = (v: StringOrArray): string[] => (Array.isArray(v) ? v : [v])
+    const normalize = (v: StringOrArray): Array<string> => (Array.isArray(v) ? v : [v])
 
-    const arrayParam = new t.Type<string | string[], string[]>(
+    const arrayParam = new t.Type<string | Array<string>, Array<string>>(
       'ArrayParameter',
       (u): u is StringOrArray => stringOrArray.is(u),
       (u, c) => pipe(stringOrArray.validate(u, c), E.map(normalize)),
