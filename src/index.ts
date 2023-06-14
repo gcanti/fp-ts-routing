@@ -97,7 +97,7 @@ export class Route {
    */
   toString(encode: boolean = true): string {
     const searchParams = Query.toURLSearchParams(this.query)
-    const qs = searchParams.toString().replace(/\+/g, '%20
+    const qs = searchParams.toString().replace(/\+/g, '%20')
     const parts = encode ? this.parts.map(encodeURIComponent) : this.parts
     return '/' + parts.join('/') + (qs ? '?' + qs : '')
   }
