@@ -237,18 +237,18 @@ export const parser: Monad1<PARSER_URI> & Alternative1<PARSER_URI> = {
  * @since 0.5.1
  */
 export const alt =
-  <A>(f: Lazy<Parser<A>>) =>
-  (fx: Parser<A>): Parser<A> =>
-    parser.alt(fx, f)
+  <A>(that: Lazy<Parser<A>>) =>
+  (fa: Parser<A>): Parser<A> =>
+    parser.alt(fa, that)
 
 /**
  * @category parsers
  * @since 0.5.1
  */
 export const ap =
-  <A>(ma: Parser<A>) =>
-  <B>(mab: Parser<(a: A) => B>): Parser<B> =>
-    parser.ap(mab, ma)
+  <A>(fa: Parser<A>) =>
+  <B>(fab: Parser<(a: A) => B>): Parser<B> =>
+    parser.ap(fab, fa)
 
 // taken from fp-ts 2.0.1 https://github.com/gcanti/fp-ts/blob/2.0.1/src/pipeable.ts#L1028
 /**
@@ -256,11 +256,11 @@ export const ap =
  * @since 0.5.1
  */
 export const apFirst =
-  <B>(second: Parser<B>) =>
-  <A>(first: Parser<A>): Parser<A> =>
+  <B>(fb: Parser<B>) =>
+  <A>(fa: Parser<A>): Parser<A> =>
     parser.ap(
-      parser.map(first, (a) => () => a),
-      second
+      parser.map(fa, (a) => () => a),
+      fb
     )
 
 // taken from fp-ts 2.0.1 https://github.com/gcanti/fp-ts/blob/2.0.1/src/pipeable.ts#L1031
@@ -269,11 +269,11 @@ export const apFirst =
  * @since 0.5.1
  */
 export const apSecond =
-  <B>(second: Parser<B>) =>
-  <A>(first: Parser<A>): Parser<B> =>
+  <B>(fb: Parser<B>) =>
+  <A>(fa: Parser<A>): Parser<B> =>
     parser.ap(
-      parser.map(first, () => (b: B) => b),
-      second
+      parser.map(fa, () => (b: B) => b),
+      fb
     )
 
 /**
@@ -291,8 +291,8 @@ export const chain =
  */
 export const chainFirst =
   <A, B>(f: (a: A) => Parser<B>) =>
-  (first: Parser<A>): Parser<A> =>
-    parser.chain(first, (a) => parser.map(f(a), () => a))
+  (ma: Parser<A>): Parser<A> =>
+    parser.chain(ma, (a) => parser.map(f(a), () => a))
 
 // Chain.chainFirst(parser)
 
@@ -310,8 +310,8 @@ export const flatten = <A>(mma: Parser<Parser<A>>): Parser<A> => parser.chain(mm
  */
 export const map =
   <A, B>(f: (a: A) => B) =>
-  (ma: Parser<A>): Parser<B> =>
-    parser.map(ma, f)
+  (fa: Parser<A>): Parser<B> =>
+    parser.map(fa, f)
 
 /**
  * @category formatters
