@@ -445,7 +445,7 @@ Added in v0.4.0
 **Signature**
 
 ```ts
-export declare const alt: <A>(f: Lazy<Parser<A>>) => (fx: Parser<A>) => Parser<A>
+export declare const alt: <A>(that: Lazy<Parser<A>>) => (fa: Parser<A>) => Parser<A>
 ```
 
 Added in v0.5.1
@@ -455,7 +455,7 @@ Added in v0.5.1
 **Signature**
 
 ```ts
-export declare const ap: <A>(ma: Parser<A>) => <B>(mab: Parser<(a: A) => B>) => Parser<B>
+export declare const ap: <A>(fa: Parser<A>) => <B>(fab: Parser<(a: A) => B>) => Parser<B>
 ```
 
 Added in v0.5.1
@@ -465,7 +465,7 @@ Added in v0.5.1
 **Signature**
 
 ```ts
-export declare const apFirst: <B>(second: Parser<B>) => <A>(first: Parser<A>) => Parser<A>
+export declare const apFirst: <B>(fb: Parser<B>) => <A>(fa: Parser<A>) => Parser<A>
 ```
 
 Added in v0.5.1
@@ -475,7 +475,7 @@ Added in v0.5.1
 **Signature**
 
 ```ts
-export declare const apSecond: <B>(second: Parser<B>) => <A>(first: Parser<A>) => Parser<B>
+export declare const apSecond: <B>(fb: Parser<B>) => <A>(fa: Parser<A>) => Parser<B>
 ```
 
 Added in v0.5.1
@@ -495,7 +495,7 @@ Added in v0.5.1
 **Signature**
 
 ```ts
-export declare const chainFirst: <A, B>(f: (a: A) => Parser<B>) => (first: Parser<A>) => Parser<A>
+export declare const chainFirst: <A, B>(f: (a: A) => Parser<B>) => (ma: Parser<A>) => Parser<A>
 ```
 
 Added in v0.5.1
@@ -525,7 +525,7 @@ Added in v0.5.1
 **Signature**
 
 ```ts
-export declare const map: <A, B>(f: (a: A) => B) => (ma: Parser<A>) => Parser<B>
+export declare const map: <A, B>(f: (a: A) => B) => (fa: Parser<A>) => Parser<B>
 ```
 
 Added in v0.5.1
