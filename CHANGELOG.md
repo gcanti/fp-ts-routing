@@ -13,6 +13,11 @@
 **Note**: Gaps between patch versions are faulty/broken releases. **Note**: A feature tagged as Experimental is in a
 high state of flux, you're at risk of it changing without notice.
 
+# 0.6.0
+
+- **Breaking Change**
+  - Prevent `then` from being called after `end` (@jleider)
+
 # 0.5.4
 
 - **Polish**
