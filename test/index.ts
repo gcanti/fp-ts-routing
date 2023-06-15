@@ -147,6 +147,20 @@ describe('Parser', () => {
     assert.deepStrictEqual(FTR.ap(ma)(mab).run(FTR.Route.parse('/')), O.some([2, FTR.Route.empty]))
   })
 
+  it('apFirst', () => {
+    const first = FTR.parser.of(1)
+    const second = FTR.parser.of(2)
+
+    assert.deepStrictEqual(FTR.apFirst(second)(first).run(FTR.Route.parse('/')), O.some([1, FTR.Route.empty]))
+  })
+
+  it('apSecond', () => {
+    const first = FTR.parser.of(1)
+    const second = FTR.parser.of(2)
+
+    assert.deepStrictEqual(FTR.apSecond(second)(first).run(FTR.Route.parse('/')), O.some([2, FTR.Route.empty]))
+  })
+
   it('chain', () => {
     assert.deepStrictEqual(
       FTR.parser.chain(FTR.str('s').parser, (a) => FTR.parser.of(a.s.length)).run(FTR.Route.parse('/aaa')),
@@ -159,6 +173,16 @@ describe('Parser', () => {
         FTR.chain((a) => FTR.parser.of(a.s.length))
       ).run(FTR.Route.parse('/aaa')),
       O.some([3, FTR.Route.empty])
+    )
+  })
+
+  it('chainFirst', () => {
+    assert.deepStrictEqual(
+      pipe(
+        FTR.str('s').parser,
+        FTR.chainFirst((a) => FTR.parser.of(a.s.length))
+      ).run(FTR.Route.parse('/aaa')),
+      O.some([{ s: 'aaa' }, FTR.Route.empty])
     )
   })
 
