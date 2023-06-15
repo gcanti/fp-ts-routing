@@ -19,7 +19,13 @@ import {
   parser,
   formatter,
   imap,
-  then
+  then,
+  contramap,
+  map,
+  ap,
+  chain,
+  alt,
+  flatten
 } from '../src'
 import * as Arr from 'fp-ts/lib/Array'
 import * as E from 'fp-ts/lib/Either'
@@ -114,6 +120,8 @@ describe('Formatter', () => {
       ),
       '/3'
     )
+
+    assert.strictEqual(format(contramap((b: { bar: string }) => ({ foo: b.bar.length }))(x), { bar: 'baz' }), '/3')
   })
 })
 
@@ -139,6 +147,14 @@ describe('Parser', () => {
       parser.map(str('s').parser, (a) => a.s.length).run(Route.parse('/aaa')),
       some([3, Route.empty])
     )
+
+    assert.deepStrictEqual(
+      pipe(
+        str('s').parser,
+        map((a) => a.s.length)
+      ).run(Route.parse('/aaa')),
+      some([3, Route.empty])
+    )
   })
 
   it('ap', () => {
@@ -146,11 +162,21 @@ describe('Parser', () => {
     const mab = parser.of(double)
     const ma = parser.of(1)
     assert.deepStrictEqual(parser.ap(mab, ma).run(Route.parse('/')), some([2, Route.empty]))
+
+    assert.deepStrictEqual(ap(ma)(mab).run(Route.parse('/')), some([2, Route.empty]))
   })
 
   it('chain', () => {
     assert.deepStrictEqual(
       parser.chain(str('s').parser, (a) => parser.of(a.s.length)).run(Route.parse('/aaa')),
+      some([3, Route.empty])
+    )
+
+    assert.deepStrictEqual(
+      pipe(
+        str('s').parser,
+        chain((a) => parser.of(a.s.length))
+      ).run(Route.parse('/aaa')),
       some([3, Route.empty])
     )
   })
@@ -160,6 +186,18 @@ describe('Parser', () => {
     assert.deepStrictEqual(p.run(Route.parse('/a')), some([{}, Route.empty]))
     assert.deepStrictEqual(p.run(Route.parse('/b')), some([{}, Route.empty]))
     assert.deepStrictEqual(p.run(Route.parse('/c')), none)
+
+    const pp = alt(() => lit('b').parser)(lit('a').parser)
+    assert.deepStrictEqual(pp.run(Route.parse('/a')), some([{}, Route.empty]))
+    assert.deepStrictEqual(pp.run(Route.parse('/b')), some([{}, Route.empty]))
+    assert.deepStrictEqual(pp.run(Route.parse('/c')), none)
+  })
+
+  it('flatten', () => {
+    const inside = str('s').parser
+    const outside = parser.of(inside)
+
+    assert.deepStrictEqual(flatten(outside).run(Route.parse('/aaa')), some([{ s: 'aaa' }, Route.empty]))
   })
 
   it('type', () => {
