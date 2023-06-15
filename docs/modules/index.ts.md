@@ -275,6 +275,7 @@ const route = lit('accounts')
   .then(query(t.strict({ pathparam: t.string })))
   .formatter.run(Route.empty, { accountId: 'testId', pathparam: '123' })
   .toString()
+
 assert.strictEqual(route, '/accounts/testId/files?pathparam=123')
 ```
 
@@ -363,7 +364,7 @@ Added in v0.4.0
 
 ```ts
 export declare class Parser<A> {
-  constructor(readonly run: (r: Route) => Option<[A, Route]>)
+  constructor(readonly run: (r: Route) => O.Option<[A, Route]>)
 }
 ```
 

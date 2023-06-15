@@ -2,15 +2,18 @@
  * @since 0.4.0
  */
 import { Alternative1 } from 'fp-ts/lib/Alternative'
-import { either } from 'fp-ts/lib/Either'
-import { identity, tuple } from 'fp-ts/lib/function'
+import { Contravariant1 } from 'fp-ts/lib/Contravariant'
+import * as E from 'fp-ts/lib/Either'
 import { Monad1 } from 'fp-ts/lib/Monad'
 import { Monoid } from 'fp-ts/lib/Monoid'
-import { fromEither, isNone, none, Option, option, some } from 'fp-ts/lib/Option'
-import { pipeable } from 'fp-ts/lib/pipeable'
+import * as O from 'fp-ts/lib/Option'
 import { isEmpty } from 'fp-ts/lib/Record'
+import { Lazy, identity } from 'fp-ts/lib/function'
 import { failure, Int, string, success, Type } from 'io-ts'
-import { Contravariant1 } from 'fp-ts/lib/Contravariant'
+
+// This `pipe` version is deprecated, but provided by `fp-ts` v2.0.1 and higher.
+// tslint:disable-next-line: deprecation
+import { pipe } from 'fp-ts/lib/pipeable'
 
 /**
  * @category routes
@@ -125,12 +128,12 @@ export class Parser<A> {
    * @since 0.4.0
    */
   readonly _A!: A
-  constructor(readonly run: (r: Route) => Option<[A, Route]>) {}
+  constructor(readonly run: (r: Route) => O.Option<[A, Route]>) {}
   /**
    * @since 0.4.0
    */
   static of<A>(a: A): Parser<A> {
-    return new Parser((s) => some(tuple(a, s)))
+    return new Parser((s) => O.some([a, s]))
   }
   /**
    * @since 0.4.0
@@ -148,17 +151,25 @@ export class Parser<A> {
    * @since 0.4.0
    */
   chain<B>(f: (a: A) => Parser<B>): Parser<B> {
-    // tslint:disable-next-line: deprecation
-    return new Parser((r) => option.chain(this.run(r), ([a, r2]) => f(a).run(r2)))
+    return new Parser((r) =>
+      // tslint:disable-next-line: deprecation
+      pipe(
+        this.run(r),
+        O.chain(([a, r2]) => f(a).run(r2))
+      )
+    )
   }
   /**
    * @since 0.4.0
    */
   alt(that: Parser<A>): Parser<A> {
-    return new Parser((r) => {
-      const oar = this.run(r)
-      return isNone(oar) ? that.run(r) : oar
-    })
+    return new Parser((r) =>
+      // tslint:disable-next-line: deprecation
+      pipe(
+        this.run(r),
+        O.alt(() => that.run(r))
+      )
+    )
   }
   /**
    * @since 0.4.0
@@ -173,7 +184,7 @@ export class Parser<A> {
  * @since 0.4.0
  */
 export function zero<A>(): Parser<A> {
-  return new Parser(() => none)
+  return new Parser(() => O.none)
 }
 
 /**
@@ -182,8 +193,13 @@ export function zero<A>(): Parser<A> {
  */
 export function parse<A>(parser: Parser<A>, r: Route, a: A): A {
   // tslint:disable-next-line: deprecation
-  const oa = option.map(parser.run(r), ([a]) => a)
-  return isNone(oa) ? a : oa.value
+  return pipe(
+    parser.run(r),
+    O.fold(
+      () => a,
+      ([x]) => x
+    )
+  )
 }
 
 /**
@@ -206,58 +222,96 @@ export const parser: Monad1<PARSER_URI> & Alternative1<PARSER_URI> = {
   ap: (mab, ma) => ma.ap(mab),
   chain: (ma, f) => ma.chain(f),
   alt: (fx, f) =>
-    new Parser((r) => {
-      const oar = fx.run(r)
-      return isNone(oar) ? f().run(r) : oar
-    }),
+    new Parser((r) =>
+      // tslint:disable-next-line: deprecation
+      pipe(
+        fx.run(r),
+        O.alt(() => f().run(r))
+      )
+    ),
   zero
 }
 
-// tslint:disable-next-line: deprecation
-const { alt, ap, apFirst, apSecond, chain, chainFirst, flatten, map } = pipeable(parser)
+/**
+ * @category parsers
+ * @since 0.5.1
+ */
+export const alt =
+  <A>(that: Lazy<Parser<A>>) =>
+  (fa: Parser<A>): Parser<A> =>
+    parser.alt(fa, that)
 
-export {
-  /**
-   * @category parsers
-   * @since 0.5.1
-   */
-  alt,
-  /**
-   * @category parsers
-   * @since 0.5.1
-   */
-  ap,
-  /**
-   * @category parsers
-   * @since 0.5.1
-   */
-  apFirst,
-  /**
-   * @category parsers
-   * @since 0.5.1
-   */
-  apSecond,
-  /**
-   * @category parsers
-   * @since 0.5.1
-   */
-  chain,
-  /**
-   * @category parsers
-   * @since 0.5.1
-   */
-  chainFirst,
-  /**
-   * @category parsers
-   * @since 0.5.1
-   */
-  flatten,
-  /**
-   * @category parsers
-   * @since 0.5.1
-   */
-  map
-}
+/**
+ * @category parsers
+ * @since 0.5.1
+ */
+export const ap =
+  <A>(fa: Parser<A>) =>
+  <B>(fab: Parser<(a: A) => B>): Parser<B> =>
+    parser.ap(fab, fa)
+
+// taken from fp-ts 2.0.1 https://github.com/gcanti/fp-ts/blob/2.0.1/src/pipeable.ts#L1028
+/**
+ * @category parsers
+ * @since 0.5.1
+ */
+export const apFirst =
+  <B>(fb: Parser<B>) =>
+  <A>(fa: Parser<A>): Parser<A> =>
+    parser.ap(
+      parser.map(fa, (a) => () => a),
+      fb
+    )
+
+// taken from fp-ts 2.0.1 https://github.com/gcanti/fp-ts/blob/2.0.1/src/pipeable.ts#L1031
+/**
+ * @category parsers
+ * @since 0.5.1
+ */
+export const apSecond =
+  <B>(fb: Parser<B>) =>
+  <A>(fa: Parser<A>): Parser<B> =>
+    parser.ap(
+      parser.map(fa, () => (b: B) => b),
+      fb
+    )
+
+/**
+ * @category parsers
+ * @since 0.5.1
+ */
+export const chain =
+  <A, B>(f: (a: A) => Parser<B>) =>
+  (ma: Parser<A>): Parser<B> =>
+    parser.chain(ma, f)
+
+/**
+ * @category parsers
+ * @since 0.5.1
+ */
+export const chainFirst =
+  <A, B>(f: (a: A) => Parser<B>) =>
+  (ma: Parser<A>): Parser<A> =>
+    parser.chain(ma, (a) => parser.map(f(a), () => a))
+
+// Chain.chainFirst(parser)
+
+// f => ma => I.chain(ma, a => I.map(f(a), () => a))
+
+/**
+ * @category parsers
+ * @since 0.5.1
+ */
+export const flatten = <A>(mma: Parser<Parser<A>>): Parser<A> => parser.chain(mma, identity)
+
+/**
+ * @category parsers
+ * @since 0.5.1
+ */
+export const map =
+  <A, B>(f: (a: A) => B) =>
+  (fa: Parser<A>): Parser<B> =>
+    parser.map(fa, f)
 
 /**
  * @category formatters
@@ -310,16 +364,14 @@ export const formatter: Contravariant1<FORMATTER_URI> = {
   contramap: (fa, f) => fa.contramap(f)
 }
 
-// tslint:disable-next-line: deprecation
-const { contramap } = pipeable(formatter)
-
-export {
-  /**
-   * @category formatters
-   * @since 0.5.1
-   */
-  contramap
-}
+/**
+ * @category formatters
+ * @since 0.5.1
+ */
+export const contramap =
+  <A, B>(f: (b: B) => A) =>
+  (fa: Formatter<A>): Formatter<B> =>
+    formatter.contramap(fa, f)
 
 /**
  * @category matchers
@@ -372,7 +424,7 @@ const singleton = <K extends string, V>(k: K, v: V): { [_ in K]: V } => ({ [k as
  * @since 0.4.0
  */
 export function succeed<A>(a: A): Match<A> {
-  return new Match(new Parser((r) => some(tuple(a, r))), new Formatter(identity))
+  return new Match(new Parser((r) => O.some([a, r])), new Formatter(identity))
 }
 
 /**
@@ -382,7 +434,7 @@ export function succeed<A>(a: A): Match<A> {
  * @since 0.4.0
  */
 export const end: Match<{}> = new Match(
-  new Parser((r) => (Route.isEmpty(r) ? some(tuple({}, r)) : none)),
+  new Parser((r) => (Route.isEmpty(r) ? O.some([{}, r]) : O.none)),
   new Formatter(identity)
 )
 
@@ -412,13 +464,15 @@ export function type<K extends string, A>(k: K, type: Type<A, string>): Match<{ 
   return new Match(
     new Parser((r) => {
       if (r.parts.length === 0) {
-        return none
-      } else {
-        const head = r.parts[0]
-        const tail = r.parts.slice(1)
-        // tslint:disable-next-line: deprecation
-        return option.map(fromEither(type.decode(head)), (a) => tuple(singleton(k, a), new Route(tail, r.query)))
+        return O.none
       }
+
+      // tslint:disable-next-line: deprecation
+      return pipe(
+        type.decode(r.parts[0]),
+        O.fromEither,
+        O.map((a) => [singleton(k, a), new Route(r.parts.slice(1), r.query)])
+      )
     }),
     new Formatter((r, o) => new Route(r.parts.concat(type.encode(o[k])), r.query))
   )
@@ -449,10 +503,13 @@ export const IntegerFromString = new Type<number, string, unknown>(
   (u): u is number => Int.is(u),
   (u, c) =>
     // tslint:disable-next-line: deprecation
-    either.chain(string.validate(u, c), (s) => {
-      const n = +s
-      return isNaN(n) || !Number.isInteger(n) ? failure(s, c) : success(n)
-    }),
+    pipe(
+      string.validate(u, c),
+      E.chain((s) => {
+        const n = +s
+        return isNaN(n) || !Number.isInteger(n) ? failure(s, c) : success(n)
+      })
+    ),
   String
 )
 
@@ -490,12 +547,10 @@ export function lit(literal: string): Match<{}> {
   return new Match(
     new Parser((r) => {
       if (r.parts.length === 0) {
-        return none
-      } else {
-        const head = r.parts[0]
-        const tail = r.parts.slice(1)
-        return head === literal ? some(tuple({}, new Route(tail, r.query))) : none
+        return O.none
       }
+
+      return r.parts[0] === literal ? O.some([{}, new Route(r.parts.slice(1), r.query)]) : O.none
     }),
     new Formatter((r) => new Route(r.parts.concat(literal), r.query))
   )
@@ -517,6 +572,7 @@ export function lit(literal: string): Match<{}> {
  *   .then(query(t.strict({ pathparam: t.string })))
  *   .formatter.run(Route.empty, { accountId: 'testId', pathparam: '123' })
  *   .toString()
+ *
  * assert.strictEqual(route, '/accounts/testId/files?pathparam=123')
  *
  * @category matchers
@@ -524,8 +580,14 @@ export function lit(literal: string): Match<{}> {
  */
 export function query<A>(type: Type<A, Record<string, QueryValues>>): Match<A> {
   return new Match(
-    // tslint:disable-next-line: deprecation
-    new Parser((r) => option.map(fromEither(type.decode(r.query)), (query) => tuple(query, new Route(r.parts, {})))),
+    new Parser((r) =>
+      // tslint:disable-next-line: deprecation
+      pipe(
+        type.decode(r.query),
+        O.fromEither,
+        O.map((query) => [query, new Route(r.parts, {})])
+      )
+    ),
     new Formatter((r, query) => new Route(r.parts, type.encode(query)))
   )
 }
