@@ -27,6 +27,15 @@
         "clear": true,
         "revealProblems": "onProblem"
       }
+    },
+    {
+      "type": "npm",
+      "script": "dtslint",
+      "problemMatcher": [],
+      "presentation": {
+        "clear": true,
+        "revealProblems": "onProblem"
+      }
     }
   ]
 }
