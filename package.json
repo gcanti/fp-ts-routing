@@ -19,7 +19,7 @@
     "prettier:fix": "prettier --write \"{src,test}/**/*.ts\"",
     "check": "tsc",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "dtslint": "dtslint dtslint",
+    "dtslint": "ts-node ./scripts/dtslint.ts",
     "jest": "jest --ci",
     "pretest": "npm run check && npm run lint && npm run dtslint",
     "test": "npm run jest",
@@ -46,12 +46,12 @@
     "io-ts": "^2.0.0"
   },
   "devDependencies": {
+    "@definitelytyped/dtslint": "^0.0.163",
     "@types/jest": "^29.5.2",
     "@types/node": "^16.18.36",
     "@typescript-eslint/eslint-plugin": "^5.59.11",
     "@typescript-eslint/parser": "^5.59.11",
     "docs-ts": "^0.6.7",
-    "dtslint": "github:gcanti/dtslint",
     "eslint": "^8.42.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-deprecation": "^1.4.1",

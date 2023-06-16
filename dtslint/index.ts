@@ -1,4 +1,4 @@
-import * as R from '../../src'
+import * as R from '../src'
 import * as t from 'io-ts'
 import { pipe } from 'fp-ts/lib/pipeable'
 
