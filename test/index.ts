@@ -1,10 +1,11 @@
 import * as assert from 'assert'
 import * as Arr from 'fp-ts/lib/Array'
 import * as E from 'fp-ts/lib/Either'
-import * as O from 'fp-ts/lib/Option'
 import { pipe } from 'fp-ts/lib/function'
+import * as O from 'fp-ts/lib/Option'
 import * as S from 'fp-ts/lib/string'
 import * as t from 'io-ts'
+
 import * as FTR from '../src'
 
 const arrEquals = Arr.getEq(S.Eq)
@@ -426,27 +427,32 @@ describe('Parser', () => {
 
 describe('Usage example', () => {
   // locations
-  class Home {
-    static value = new Home()
-    readonly _tag: 'Home' = 'Home'
-    private constructor() {}
+  interface Home {
+    readonly _tag: 'Home'
   }
 
-  class User {
-    readonly _tag: 'User' = 'User'
-    constructor(readonly id: number) {}
+  const Home = (): Home => ({ _tag: 'Home' })
+
+  interface User {
+    readonly _tag: 'User'
+    readonly id: number
   }
 
-  class Invoice {
-    readonly _tag: 'Invoice' = 'Invoice'
-    constructor(readonly userId: number, readonly invoiceId: number) {}
+  const User = (id: number): User => ({ _tag: 'User', id })
+
+  interface Invoice {
+    readonly _tag: 'Invoice'
+    readonly userId: number
+    readonly invoiceId: number
   }
 
-  class NotFound {
-    static value = new NotFound()
-    readonly _tag: 'NotFound' = 'NotFound'
-    private constructor() {}
+  const Invoice = (userId: number, invoiceId: number): Invoice => ({ _tag: 'Invoice', userId, invoiceId })
+
+  interface NotFound {
+    readonly _tag: 'NotFound'
   }
+
+  const NotFound = (): NotFound => ({ _tag: 'NotFound' })
 
   type Location = Home | User | Invoice | NotFound
 
@@ -459,20 +465,20 @@ describe('Usage example', () => {
 
   // router
   const router = FTR.zero<Location>()
-    .alt(defaults.parser.map(() => Home.value))
-    .alt(home.parser.map(() => Home.value))
-    .alt(user.parser.map(({ userId }) => new User(userId)))
-    .alt(invoice.parser.map(({ userId, invoiceId }) => new Invoice(userId, invoiceId)))
+    .alt(defaults.parser.map(() => Home()))
+    .alt(home.parser.map(() => Home()))
+    .alt(user.parser.map(({ userId }) => User(userId)))
+    .alt(invoice.parser.map(({ userId, invoiceId }) => Invoice(userId, invoiceId)))
 
   // helpers
-  const parseLocation = (s: string): Location => FTR.parse(router, FTR.Route.parse(s), NotFound.value)
+  const parseLocation = (s: string): Location => FTR.parse(router, FTR.Route.parse(s), NotFound())
 
   it('should match a location', () => {
-    assert.strictEqual(parseLocation('/'), Home.value)
-    assert.strictEqual(parseLocation('/home'), Home.value)
-    assert.deepStrictEqual(parseLocation('/users/1'), new User(1))
-    assert.deepStrictEqual(parseLocation('/users/1/invoice/2'), new Invoice(1, 2))
-    assert.strictEqual(parseLocation('/foo'), NotFound.value)
+    assert.deepStrictEqual(parseLocation('/'), Home())
+    assert.deepStrictEqual(parseLocation('/home'), Home())
+    assert.deepStrictEqual(parseLocation('/users/1'), User(1))
+    assert.deepStrictEqual(parseLocation('/users/1/invoice/2'), Invoice(1, 2))
+    assert.deepStrictEqual(parseLocation('/foo'), NotFound())
   })
 
   it('should format a location', () => {
