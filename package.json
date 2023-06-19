@@ -20,16 +20,15 @@
     "check": "tsc",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "dtslint": "ts-node ./scripts/dtslint.ts",
-    "jest": "jest --ci",
     "pretest": "npm run check && npm run lint && npm run dtslint",
-    "test": "npm run jest",
-    "posttest": "npm run docs",
+    "test": "jest --ci",
     "mocha": "mocha -r ts-node/register test/*.ts",
     "prebuild": "npm run clean",
     "build": "tsc -p ./tsconfig.build.json && tsc -p ./tsconfig.build-es6.json",
     "postbuild": "import-path-rewrite",
     "prepublishOnly": "npm run build",
-    "docs": "docs-ts"
+    "docs": "docs-ts",
+    "docs:update": "npm run docs && git add docs"
   },
   "repository": {
     "type": "git",
