@@ -17,7 +17,7 @@ import { failure, Int, string, success, Type } from 'io-ts'
  * @category routes
  * @since 0.4.0
  */
-export type QueryValues = string | Array<string> | undefined
+export type QueryValues = string | Array<string>
 
 /**
  * @category routes
@@ -570,7 +570,7 @@ export function lit(literal: string): Match<{}> {
  * @category matchers
  * @since 0.4.0
  */
-export function query<A>(type: Type<A, Record<string, QueryValues>>): Match<A> {
+export function query<A>(type: Type<A, Query>): Match<A> {
   return new Match(
     new Parser((r) =>
       pipe(
