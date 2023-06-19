@@ -1,6 +1,6 @@
 ---
 title: index.ts
-nav_order: 1
+nav_order: 2
 parent: Modules
 ---
 
@@ -20,6 +20,8 @@ Added in v0.4.0
   - [contramap](#contramap)
   - [format](#format)
   - [formatter](#formatter)
+- [helpers](#helpers)
+  - [RowLacks](#rowlacks)
 - [matchers](#matchers)
   - [Match (class)](#match-class)
     - [imap (method)](#imap-method)
@@ -35,14 +37,7 @@ Added in v0.4.0
   - [then](#then)
   - [type](#type)
 - [parsers](#parsers)
-  - [Parser (class)](#parser-class)
-    - [of (static method)](#of-static-method)
-    - [map (method)](#map-method)
-    - [ap (method)](#ap-method)
-    - [chain (method)](#chain-method)
-    - [alt (method)](#alt-method)
-    - [then (method)](#then-method-2)
-    - [\_A (property)](#_a-property-2)
+  - [Parser](#parser)
   - [alt](#alt)
   - [ap](#ap)
   - [apFirst](#apfirst)
@@ -55,8 +50,6 @@ Added in v0.4.0
   - [parse](#parse)
   - [parser](#parser)
   - [zero](#zero)
-- [utils](#utils)
-  - [RowLacks (type alias)](#rowlacks-type-alias)
 
 ---
 
@@ -133,6 +126,18 @@ export declare const formatter: Contravariant1<'fp-ts-routing/Formatter'>
 ```
 
 Added in v0.5.1
+
+# helpers
+
+## RowLacks
+
+**Signature**
+
+```ts
+export declare const RowLacks: any
+```
+
+Added in v0.4.0
 
 # matchers
 
@@ -351,84 +356,12 @@ Added in v0.4.0
 
 # parsers
 
-## Parser (class)
+## Parser
 
 **Signature**
 
 ```ts
-export declare class Parser<A> {
-  constructor(readonly run: (r: Route) => O.Option<[A, Route]>)
-}
-```
-
-Added in v0.4.0
-
-### of (static method)
-
-**Signature**
-
-```ts
-static of<A>(a: A): Parser<A>
-```
-
-Added in v0.4.0
-
-### map (method)
-
-**Signature**
-
-```ts
-map<B>(f: (a: A) => B): Parser<B>
-```
-
-Added in v0.4.0
-
-### ap (method)
-
-**Signature**
-
-```ts
-ap<B>(fab: Parser<(a: A) => B>): Parser<B>
-```
-
-Added in v0.4.0
-
-### chain (method)
-
-**Signature**
-
-```ts
-chain<B>(f: (a: A) => Parser<B>): Parser<B>
-```
-
-Added in v0.4.0
-
-### alt (method)
-
-**Signature**
-
-```ts
-alt(that: Parser<A>): Parser<A>
-```
-
-Added in v0.4.0
-
-### then (method)
-
-**Signature**
-
-```ts
-then<B>(that: Parser<RowLacks<B, keyof A>>): Parser<A & B>
-```
-
-Added in v0.4.0
-
-### \_A (property)
-
-**Signature**
-
-```ts
-readonly _A: A
+export declare const Parser: typeof Parser
 ```
 
 Added in v0.4.0
@@ -528,7 +461,7 @@ Added in v0.5.1
 **Signature**
 
 ```ts
-export declare function parse<A>(parser: Parser<A>, r: Route, a: A): A
+export declare const parse: <A>(parser: Parser<A>, r: Route, a: A) => A
 ```
 
 Added in v0.4.0
@@ -548,22 +481,7 @@ Added in v0.5.1
 **Signature**
 
 ```ts
-export declare function zero<A>(): Parser<A>
-```
-
-Added in v0.4.0
-
-# utils
-
-## RowLacks (type alias)
-
-Encodes the constraint that a given object `O`
-does not contain specific keys `K`
-
-**Signature**
-
-```ts
-export type RowLacks<O, K extends string | number | symbol> = O & Record<Extract<keyof O, K>, never>
+export declare const zero: <A>() => Parser<A>
 ```
 
 Added in v0.4.0
