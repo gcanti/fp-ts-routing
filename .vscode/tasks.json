@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "check",
+      "problemMatcher": ["$tsc"],
+      "presentation": {
+        "clear": true,
+        "revealProblems": "onProblem"
+      }
+    },
+    {
+      "type": "npm",
+      "script": "lint",
+      "problemMatcher": ["$eslint-stylish"],
+      "presentation": {
+        "clear": true,
+        "revealProblems": "onProblem"
+      }
+    },
+    {
+      "type": "npm",
+      "script": "prettier:fix",
+      "problemMatcher": [],
+      "presentation": {
+        "clear": true,
+        "revealProblems": "onProblem"
+      }
+    },
+    {
+      "type": "npm",
+      "script": "dtslint",
+      "problemMatcher": [],
+      "presentation": {
+        "clear": true,
+        "revealProblems": "onProblem"
+      }
+    }
+  ]
+}

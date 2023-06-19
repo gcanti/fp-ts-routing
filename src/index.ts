@@ -4,16 +4,14 @@
 import { Alternative1 } from 'fp-ts/lib/Alternative'
 import { Contravariant1 } from 'fp-ts/lib/Contravariant'
 import * as E from 'fp-ts/lib/Either'
+import { identity, Lazy } from 'fp-ts/lib/function'
 import { Monad1 } from 'fp-ts/lib/Monad'
 import { Monoid } from 'fp-ts/lib/Monoid'
 import * as O from 'fp-ts/lib/Option'
-import { isEmpty } from 'fp-ts/lib/Record'
-import { Lazy, identity } from 'fp-ts/lib/function'
-import { failure, Int, string, success, Type } from 'io-ts'
-
 // This `pipe` version is deprecated, but provided by `fp-ts` v2.0.1 and higher.
-// tslint:disable-next-line: deprecation
 import { pipe } from 'fp-ts/lib/pipeable'
+import { isEmpty } from 'fp-ts/lib/Record'
+import { failure, Int, string, success, Type } from 'io-ts'
 
 /**
  * @category routes
@@ -152,7 +150,6 @@ export class Parser<A> {
    */
   chain<B>(f: (a: A) => Parser<B>): Parser<B> {
     return new Parser((r) =>
-      // tslint:disable-next-line: deprecation
       pipe(
         this.run(r),
         O.chain(([a, r2]) => f(a).run(r2))
@@ -164,7 +161,6 @@ export class Parser<A> {
    */
   alt(that: Parser<A>): Parser<A> {
     return new Parser((r) =>
-      // tslint:disable-next-line: deprecation
       pipe(
         this.run(r),
         O.alt(() => that.run(r))
@@ -192,7 +188,6 @@ export function zero<A>(): Parser<A> {
  * @since 0.4.0
  */
 export function parse<A>(parser: Parser<A>, r: Route, a: A): A {
-  // tslint:disable-next-line: deprecation
   return pipe(
     parser.run(r),
     O.fold(
@@ -223,7 +218,6 @@ export const parser: Monad1<PARSER_URI> & Alternative1<PARSER_URI> = {
   chain: (ma, f) => ma.chain(f),
   alt: (fx, f) =>
     new Parser((r) =>
-      // tslint:disable-next-line: deprecation
       pipe(
         fx.run(r),
         O.alt(() => f().run(r))
@@ -467,7 +461,6 @@ export function type<K extends string, A>(k: K, type: Type<A, string>): Match<{ 
         return O.none
       }
 
-      // tslint:disable-next-line: deprecation
       return pipe(
         type.decode(r.parts[0]),
         O.fromEither,
@@ -502,7 +495,6 @@ export const IntegerFromString = new Type<number, string, unknown>(
   'IntegerFromString',
   (u): u is number => Int.is(u),
   (u, c) =>
-    // tslint:disable-next-line: deprecation
     pipe(
       string.validate(u, c),
       E.chain((s) => {
@@ -581,7 +573,6 @@ export function lit(literal: string): Match<{}> {
 export function query<A>(type: Type<A, Record<string, QueryValues>>): Match<A> {
   return new Match(
     new Parser((r) =>
-      // tslint:disable-next-line: deprecation
       pipe(
         type.decode(r.query),
         O.fromEither,

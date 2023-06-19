@@ -23,6 +23,10 @@
   "[typescriptreact]": {
     "editor.formatOnSave": true
   },
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "eslint.validate": ["javascript", "javascriptreact", "html", "typescript", "typescriptreact"],
   "typescript.reportStyleChecksAsWarnings": false,
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.validate.enable": true

@@ -6,14 +6,15 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "lib": ["es6", "dom"],
-    "sourceMap": false,
+    "sourceMap": true,
     "declaration": true,
     "strict": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
   },
-  "include": ["./src", "./test"]
+  "include": ["./src", "./test", "./scripts", "./jest.config.ts"]
 }
