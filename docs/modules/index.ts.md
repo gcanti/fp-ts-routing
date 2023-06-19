@@ -1,6 +1,6 @@
 ---
 title: index.ts
-nav_order: 2
+nav_order: 3
 parent: Modules
 ---
 
@@ -13,10 +13,7 @@ Added in v0.4.0
 <h2 class="text-delta">Table of contents</h2>
 
 - [formatters](#formatters)
-  - [Formatter (class)](#formatter-class)
-    - [contramap (method)](#contramap-method)
-    - [then (method)](#then-method)
-    - [\_A (property)](#_a-property)
+  - [Formatter](#formatter)
   - [contramap](#contramap)
   - [format](#format)
   - [formatter](#formatter)
@@ -25,8 +22,8 @@ Added in v0.4.0
 - [matchers](#matchers)
   - [Match (class)](#match-class)
     - [imap (method)](#imap-method)
-    - [then (method)](#then-method-1)
-    - [\_A (property)](#_a-property-1)
+    - [then (method)](#then-method)
+    - [\_A (property)](#_a-property)
   - [end](#end)
   - [imap](#imap)
   - [int](#int)
@@ -55,44 +52,12 @@ Added in v0.4.0
 
 # formatters
 
-## Formatter (class)
+## Formatter
 
 **Signature**
 
 ```ts
-export declare class Formatter<A> {
-  constructor(readonly run: (r: Route, a: A) => Route)
-}
-```
-
-Added in v0.4.0
-
-### contramap (method)
-
-**Signature**
-
-```ts
-contramap<B>(f: (b: B) => A): Formatter<B>
-```
-
-Added in v0.4.0
-
-### then (method)
-
-**Signature**
-
-```ts
-then<B>(that: Formatter<B> & Formatter<RowLacks<B, keyof A>>): Formatter<A & B>
-```
-
-Added in v0.4.0
-
-### \_A (property)
-
-**Signature**
-
-```ts
-readonly _A: A
+export declare const Formatter: typeof Formatter
 ```
 
 Added in v0.4.0
@@ -112,7 +77,7 @@ Added in v0.5.1
 **Signature**
 
 ```ts
-export declare function format<A>(formatter: Formatter<A>, a: A, encode: boolean = true): string
+export declare const format: <A>(formatter: Formatter<A>, a: A, encode?: boolean) => string
 ```
 
 Added in v0.4.0
