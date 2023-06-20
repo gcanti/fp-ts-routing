@@ -19,7 +19,7 @@
     "prettier:fix": "prettier --write \"{src,test}/**/*.ts\"",
     "check": "tsc",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "dtslint": "ts-node ./scripts/dtslint.ts",
+    "dtslint": "dtslint --expectOnly dtslint",
     "pretest": "npm run check && npm run lint && npm run dtslint",
     "test": "jest --ci",
     "mocha": "mocha -r ts-node/register test/*.ts",
