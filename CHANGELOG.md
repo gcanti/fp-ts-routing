@@ -13,6 +13,19 @@
 **Note**: Gaps between patch versions are faulty/broken releases. **Note**: A feature tagged as Experimental is in a
 high state of flux, you're at risk of it changing without notice.
 
+# 0.6.0
+
+- **New Feature**
+  - Pipeable methods for parsers and formatters, #63 (@StefanoMagrassi)
+- **Bug Fix**
+  - Leading slashes, #65 (@StefanoMagrassi)
+- **Polish**
+  - query fail with array, #60 (@StefanoMagrassi)
+- **Internal**
+  - Node.js querystring and url dependencies, #58 (@StefanoMagrassi)
+  - Remove deprecation, #72 (@StefanoMagrassi)
+  - Drop TSLint in favor of ESLint, #73 (@StefanoMagrassi)
+
 # 0.5.4
 
 - **Polish**
