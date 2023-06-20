@@ -32,6 +32,7 @@ Added in v0.6.0
   - [map](#map)
   - [parse](#parse)
   - [parser](#parser)
+  - [then](#then)
   - [zero](#zero)
 
 ---
@@ -229,6 +230,16 @@ export declare const parser: Monad1<'fp-ts-routing/Parser'> & Alternative1<'fp-t
 ```
 
 Added in v0.5.1
+
+## then
+
+**Signature**
+
+```ts
+export declare const then: <B>(fb: Parser<B>) => <A>(fa: Parser<A> & Parser<RowLacks<A, keyof B>>) => Parser<A & B>
+```
+
+Added in v0.6.0
 
 ## zero
 

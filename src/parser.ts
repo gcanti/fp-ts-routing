@@ -205,6 +205,15 @@ export const map =
   (fa: Parser<A>): Parser<B> =>
     parser.map(fa, f)
 
+/**
+ * @category parsers
+ * @since 0.6.0
+ */
+export const then =
+  <B>(fb: Parser<B>) =>
+  <A>(fa: Parser<A> & Parser<RowLacks<A, keyof B>>): Parser<A & B> =>
+    fa.then(fb as any)
+
 // --- Helpers
 const assign =
   <A>(a: A) =>
