@@ -48,10 +48,7 @@ const defaults = end
 const homeMatch = lit('home').then(end)
 const userIdMatch = lit('users').then(int('userId'))
 const userMatch = userIdMatch.then(end)
-const invoiceMatch = userIdMatch
-  .then(lit('invoice'))
-  .then(int('invoiceId'))
-  .then(end)
+const invoiceMatch = userIdMatch.then(lit('invoice')).then(int('invoiceId')).then(end)
 
 // router
 const router = zero<Location>()
