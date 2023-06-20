@@ -30,13 +30,6 @@ export class Formatter<A> {
   }
 }
 
-/**
- * @category formatters
- * @since 0.4.0
- */
-export const format = <A>(formatter: Formatter<A>, a: A, encode: boolean = true): string =>
-  formatter.run(Route.empty, a).toString(encode)
-
 declare module 'fp-ts/lib/HKT' {
   interface URItoKind<A> {
     'fp-ts-routing/Formatter': Formatter<A>
@@ -64,3 +57,19 @@ export const contramap =
   <A, B>(f: (b: B) => A) =>
   (fa: Formatter<A>): Formatter<B> =>
     formatter.contramap(fa, f)
+
+/**
+ * @category formatters
+ * @since 0.6.0
+ */
+export const then =
+  <B>(fb: Formatter<B>) =>
+  <A>(fa: Formatter<A> & Formatter<RowLacks<A, keyof B>>): Formatter<A & B> =>
+    fa.then(fb as any)
+
+/**
+ * @category formatters
+ * @since 0.4.0
+ */
+export const format = <A>(formatter: Formatter<A>, a: A, encode: boolean = true): string =>
+  formatter.run(Route.empty, a).toString(encode)

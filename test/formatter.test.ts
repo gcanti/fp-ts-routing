@@ -1,4 +1,5 @@
 import * as assert from 'assert'
+import { pipe } from 'fp-ts/lib/function'
 import * as t from 'io-ts'
 
 import * as F from '../src/formatter'
@@ -22,8 +23,10 @@ describe('format', () => {
 describe('Formatter', () => {
   it('then', () => {
     const x = FORMATTER('username').then(FORMATTER('foo'))
+    const y = pipe(FORMATTER('username'), F.then(FORMATTER('foo')))
 
     assert.strictEqual(F.format(x, { username: 'test', foo: 'bar' }), '/test/bar')
+    assert.strictEqual(F.format(y, { username: 'test', foo: 'bar' }), '/test/bar')
   })
 
   it('contramap', () => {

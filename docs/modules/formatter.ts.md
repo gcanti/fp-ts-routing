@@ -20,6 +20,7 @@ Added in v0.6.0
   - [contramap](#contramap)
   - [format](#format)
   - [formatter](#formatter)
+  - [then](#then)
 
 ---
 
@@ -96,3 +97,15 @@ export declare const formatter: Contravariant1<'fp-ts-routing/Formatter'>
 ```
 
 Added in v0.5.1
+
+## then
+
+**Signature**
+
+```ts
+export declare const then: <B>(
+  fb: Formatter<B>
+) => <A>(fa: Formatter<A> & Formatter<RowLacks<A, keyof B>>) => Formatter<A & B>
+```
+
+Added in v0.6.0
