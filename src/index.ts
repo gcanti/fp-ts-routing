@@ -1,6 +1,10 @@
 /**
  * @since 0.4.0
  */
+
+/* istanbul ignore file */
+// Istanbul has some issues with re-exported symbols, so we temporarly ignore coverage only for this file
+
 import { contramap, format, Formatter, formatter } from './formatter'
 import { RowLacks } from './helpers'
 import { end, imap, int, IntegerFromString, lit, Match, query, str, succeed, then, type } from './matcher'
