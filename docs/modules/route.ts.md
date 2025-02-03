@@ -83,7 +83,7 @@ Added in v0.4.0
 **Signature**
 
 ```ts
-toString(encode: boolean = true): string
+toString(encode: boolean = true): `/${string}`
 ```
 
 Added in v0.4.0
