@@ -47,10 +47,10 @@ export class Route {
   /**
    * @since 0.4.0
    */
-  toString(encode: boolean = true): string {
+  toString(encode: boolean = true): `/${string}` {
     const qs = fromQuery(this.query).toString()
     const parts = encode ? this.parts.map(encodeURIComponent) : this.parts
-    return '/' + parts.join('/') + (qs ? '?' + qs : '')
+    return `/${parts.join('/')}${qs ? '?' + qs : ''}`
   }
 }
 
