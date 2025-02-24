@@ -8,7 +8,10 @@ npm i fp-ts-routing
 
 # TypeScript compatibility
 
-The stable version is tested against TypeScript 3.5.2 but should run with 3.2.2+ too.
+| `fp-ts-routing` version | required `typescript` version                                  |
+| ----------------------- | -------------------------------------------------------------- |
+| 0.7.0+                  | 4.1+                                                           |
+| <= 0.6.0                | tested against TypeScript 3.5.2 but should run with 3.2.2+ too |
 
 # Usage
 
@@ -51,10 +54,7 @@ const defaults = end
 const homeMatch = lit('home').then(end)
 const userIdMatch = lit('users').then(int('userId'))
 const userMatch = userIdMatch.then(end)
-const invoiceMatch = userIdMatch
-  .then(lit('invoice'))
-  .then(int('invoiceId'))
-  .then(end)
+const invoiceMatch = userIdMatch.then(lit('invoice')).then(int('invoiceId')).then(end)
 
 // router
 const router = zero<Location>()
